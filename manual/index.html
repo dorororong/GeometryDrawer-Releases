@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geometry Drawer 사용 설명서</title>
+<meta name="description" content="Geometry Drawer 설치부터 조건 입력, 작도, 시험지용 다듬기, 저장과 한글 복사까지 따라 하는 사용 설명서">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 26 L27 26 L19 6 Z' fill='none' stroke='%232f6fde' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #fbfbfa; --surface: #ffffff; --ink: #1d2126; --muted: #5d6570; --line: #e3e5e8;
+    --accent: #2f6fde; --accent-ink: #ffffff; --accent-soft: #e9f0fd; --warn-soft: #fff4e5; --warn: #9a5b00;
+    --shadow: 0 1px 2px rgb(16 24 40 / .06), 0 8px 24px rgb(16 24 40 / .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121417; --surface: #1a1d21; --ink: #e8eaed; --muted: #a0a7b1; --line: #2c3036;
+      --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --warn-soft: #2e2615; --warn: #f0b45c; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121417; --surface: #1a1d21; --ink: #e8eaed; --muted: #a0a7b1; --line: #2c3036;
+    --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --warn-soft: #2e2615; --warn: #f0b45c; --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 16px; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.75 "Pretendard", "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    word-break: keep-all; overflow-wrap: anywhere;
+  }
+  a { color: var(--accent); }
+  header.top { max-width: 1160px; margin: 0 auto; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--ink); text-decoration: none; white-space: nowrap; }
+  .brand svg { width: 26px; height: 26px; }
+  .top nav { display: flex; align-items: center; gap: 18px; }
+  .top nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
+  .theme { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+
+  .layout { max-width: 1160px; margin: 0 auto; padding: 0 24px 64px; display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 48px; }
+  .toc { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow: auto; font-size: 14px; }
+  .toc b { display: block; color: var(--muted); font-size: 12px; letter-spacing: .04em; margin: 4px 0 8px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; counter-reset: t; }
+  .toc li { counter-increment: t; }
+  .toc a { display: block; padding: 5px 10px; border-radius: 8px; color: var(--muted); text-decoration: none; line-height: 1.45; }
+  .toc a::before { content: counter(t) ". "; }
+  .toc a:hover, .toc a.on { background: var(--accent-soft); color: var(--ink); }
+
+  main { min-width: 0; max-width: 820px; }
+  h1 { font-size: clamp(28px, 3.6vw, 38px); letter-spacing: -.02em; line-height: 1.3; margin: 8px 0 10px; }
+  .intro { color: var(--muted); font-size: 17px; margin: 0 0 8px; }
+  section { padding: 40px 0 8px; border-top: 1px solid var(--line); margin-top: 32px; }
+  h2 { font-size: 25px; letter-spacing: -.01em; margin: 0 0 6px; }
+  h2 small { color: var(--muted); font-weight: 500; font-size: 15px; margin-left: 6px; }
+  h3 { font-size: 18px; margin: 30px 0 6px; }
+  p { margin: 10px 0; }
+  .muted { color: var(--muted); }
+
+  ol.steps { list-style: none; padding: 0; margin: 14px 0; counter-reset: s; }
+  ol.steps > li { counter-increment: s; position: relative; padding: 2px 0 12px 44px; }
+  ol.steps > li::before {
+    content: counter(s); position: absolute; left: 0; top: 2px; width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px;
+  }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+
+  figure { margin: 18px 0 22px; }
+  figure a { display: block; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+  figure img { display: block; width: 100%; height: auto; }
+  figure.narrow a { max-width: 460px; }
+  figure.mid a { max-width: 620px; }
+  figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; }
+
+  .ui { display: inline-block; padding: 0 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-size: .92em; line-height: 1.6; white-space: nowrap; color: var(--ink); }
+  kbd { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .85em; padding: 1px 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; background: var(--surface); }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .9em; background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; }
+  pre { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: 14px; line-height: 1.6; }
+  pre code { background: none; padding: 0; }
+
+  .tip, .warn { border-radius: 12px; padding: 14px 16px; margin: 16px 0; font-size: 15px; }
+  .tip { background: var(--accent-soft); }
+  .warn { background: var(--warn-soft); }
+  .tip b:first-child, .warn b:first-child { display: block; margin-bottom: 2px; }
+  .warn b:first-child { color: var(--warn); }
+
+  .table { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-size: 13px; color: var(--muted); font-weight: 600; background: var(--bg); }
+  td code { white-space: nowrap; }
+
+  footer { border-top: 1px solid var(--line); margin-top: 48px; padding-top: 20px; color: var(--muted); font-size: 14px; }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 0; }
+    .toc { position: static; max-height: none; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--surface); margin-bottom: 8px; }
+  }
+  @media (max-width: 520px) {
+    header.top, .layout { padding-left: 16px; padding-right: 16px; }
+    .top nav a { display: none; }
+    ol.steps > li { padding-left: 40px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="../">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 26 L27 26 L19 6 Z" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/></svg>
+    Geometry Drawer
+  </a>
+  <nav>
+    <a href="../">처음 화면</a>
+    <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/GeometryDrawer.exe">다운로드</a>
+    <button class="theme" id="theme" type="button" aria-label="화면 테마 바꾸기">테마</button>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="toc" aria-label="목차">
+    <b>목차</b>
+    <ol>
+      <li><a href="#start">설치하고 실행하기</a></li>
+      <li><a href="#screen">화면 둘러보기</a></li>
+      <li><a href="#first">첫 도형 그리기 (블록)</a></li>
+      <li><a href="#result">결과 읽기</a></li>
+      <li><a href="#text">텍스트로 조건 쓰기</a></li>
+      <li><a href="#ai">그림·문장으로 입력 (AI)</a></li>
+      <li><a href="#polish">시험지용으로 다듬기</a></li>
+      <li><a href="#tools">작도 도구로 직접 그리기</a></li>
+      <li><a href="#export">PNG와 그림 복사</a></li>
+      <li><a href="#sentence">문제 문장과 한글 복사</a></li>
+      <li><a href="#save">로그인·저장·열기</a></li>
+      <li><a href="#keys">API 키 넣기</a></li>
+      <li><a href="#relation">큰 관계 블록 편집기</a></li>
+      <li><a href="#update">업데이트와 저장 위치</a></li>
+      <li><a href="#trouble">문제 해결</a></li>
+    </ol>
+  </aside>
+
+  <main>
+    <h1>사용 설명서</h1>
+    <p class="intro">처음 실행부터 시험지에 붙일 그림을 만들기까지, 화면을 보며 순서대로 따라 할 수 있게 정리했습니다. 예시는 모두 “직각삼각형 ABC와 빗변의 중점 E” 하나로 이어집니다.</p>
+
+    <section id="start">
+      <h2>1. 설치하고 실행하기</h2>
+      <ol class="steps">
+        <li><a href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/GeometryDrawer.exe">GeometryDrawer.exe</a>를 받아 <b>바탕화면이나 문서 폴더</b>처럼 내가 쓸 수 있는 폴더에 둡니다. <span class="muted">(Program Files처럼 쓰기 권한이 없는 폴더에 두면 업데이트가 되지 않습니다.)</span></li>
+        <li>더블클릭합니다. 처음 실행할 때 <b>“Windows의 PC 보호”</b> 창이 뜨면 <span class="ui">추가 정보</span> → <span class="ui">실행</span>을 누릅니다. 코드 서명 인증서가 아직 없어서 나오는 안내입니다.</li>
+        <li>작은 <b>실행 창</b>이 뜨고, 잠시 뒤 기본 브라우저(Edge, Chrome 등)에 <b>작도판</b>이 열립니다. 첫 실행은 몇 초 걸릴 수 있습니다.</li>
+      </ol>
+      <h3>실행 창의 버튼</h3>
+      <div class="table"><table>
+        <tr><th>버튼</th><th>하는 일</th></tr>
+        <tr><td><span class="ui">작도판 열기</span></td><td>브라우저 창을 닫았거나 열리지 않았을 때 작도판을 다시 엽니다.</td></tr>
+        <tr><td><span class="ui">저장 폴더</span></td><td>도면·설정·로그가 저장되는 폴더를 엽니다.</td></tr>
+        <tr><td><span class="ui">업데이트 하기</span></td><td>새 버전이 있으면 받아서 교체하고 다시 실행합니다. (<a href="#update">14장</a>)</td></tr>
+        <tr><td><span class="ui">종료</span></td><td>프로그램을 끝냅니다. 실행 창을 닫아도 같습니다.</td></tr>
+      </table></div>
+      <div class="warn"><b>실행 창을 닫으면 작도판도 멈춥니다</b>브라우저 탭은 남아 있어도 작도·저장이 되지 않습니다. 작업을 저장한 뒤 닫으세요.</div>
+    </section>
+
+    <section id="screen">
+      <h2>2. 화면 둘러보기</h2>
+      <figure><a href="img/01-start.jpg"><img src="img/01-start.jpg" alt="처음 연 작도판: 위쪽 도구 막대, 왼쪽 작도 도구, 가운데 작도판, 오른쪽 대수창과 문제 입력" loading="lazy"></a>
+        <figcaption>처음 연 작도판</figcaption></figure>
+      <ul>
+        <li><b>위쪽 도구 막대</b>: 새로·열기·저장, PNG·그림 복사, 되돌리기, 글꼴·선 굵기, 로그인 등</li>
+        <li><b>왼쪽 작도 도구</b>: 점·선·원·다각형·측정·꾸미기 (마우스로 직접 그릴 때)</li>
+        <li><b>가운데 작도판</b>: 도형이 그려지는 곳. 휠로 확대·축소, 빈 곳을 끌면 화면 이동</li>
+        <li><b>오른쪽 위 대수창</b>: 그려진 점·선·원 목록과 좌표</li>
+        <li><b>오른쪽 아래 문제 입력</b>: 조건을 넣어 자동으로 작도하는 곳. 이 설명서의 대부분은 여기서 시작합니다.</li>
+      </ul>
+      <figure><a href="img/06-toolbar.png"><img src="img/06-toolbar.png" alt="위쪽 도구 막대" loading="lazy"></a>
+        <figcaption>도구 막대. 자물쇠가 붙은 열기·저장·API 키는 <a href="#save">로그인</a> 후에 쓸 수 있습니다. 아이콘만 있는 버튼은 왼쪽부터 다른 이름으로 저장, PNG, 오른쪽 끝의 시험지 모양 전환, 대수창 보이기/숨기기입니다.</figcaption></figure>
+      <p class="muted">오른쪽 창의 너비는 작도판과의 경계선을, 대수창과 문제 입력의 높이는 그 사이 가로 손잡이를 끌어 바꿀 수 있습니다.</p>
+    </section>
+
+    <section id="first">
+      <h2>3. 첫 도형 그리기 <small>블록으로 · API 키 필요 없음</small></h2>
+      <p>예시: <b>AB = 3, AC = 4, BC = 5인 삼각형 ABC에서 E는 BC의 중점, 선분 AE를 긋고 ∠BAC를 구한다.</b></p>
+      <ol class="steps">
+        <li>오른쪽 <b>문제 입력</b>에서 <span class="ui">블록·IR 입력</span> 탭을 누릅니다.</li>
+        <li>가장 빠른 방법: 아래쪽 예시 목록에서 <span class="ui">직각삼각형 + 중점</span>을 고르고 <span class="ui">예시 넣기</span>를 누릅니다. 아래 그림처럼 블록이 채워집니다.</li>
+        <li>직접 만들 때는 왼쪽 <b>분류</b>(도형 · 점 위치 · 원 · 길이·각 · 관계 · 표시·질문)를 고르고, 가운데 목록의 블록을 <b>클릭</b>하거나 오른쪽 작업대로 <b>끌어</b> 놓습니다. 위쪽 <span class="ui">블록 찾기</span>에 “중점”, “수직”처럼 쳐서 찾을 수도 있습니다.</li>
+        <li>블록의 빈칸에 <b>점 이름</b>(A, B, C…)과 <b>값</b>(3, 4, 60…)을 씁니다. 작업대 위쪽의 <span class="ui">A</span> <span class="ui">B</span> 칩은 지금 쓰인 점이고, <span class="ui">+D</span>는 새 점 이름입니다.</li>
+        <li>필요하면 <span class="ui">길이 단위</span>(cm · m · 단위 없음)를 고릅니다. 그림의 길이 글자에 붙습니다.</li>
+        <li>초록색 <span class="ui">▶ 그리기</span>(또는 <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, 아래쪽 <span class="ui">바로 그리기</span>)를 누릅니다. 1~2초 안에 작도판에 도형이 나타납니다.</li>
+      </ol>
+      <figure class="mid"><a href="img/02-blocks.png"><img src="img/02-blocks.png" alt="블록·IR 입력 탭에 직각삼각형과 중점 조건 블록이 쌓인 모습" loading="lazy"></a>
+        <figcaption>블록 하나가 조건 한 줄입니다. 블록 오른쪽의 ⧉는 복제, ✕는 삭제, 왼쪽 ⠿ 손잡이를 끌면 순서가 바뀝니다. ↶ ↷로 블록 편집을 되돌립니다.</figcaption></figure>
+      <h3>블록 종류 한눈에 보기</h3>
+      <div class="table"><table>
+        <tr><th>분류</th><th>대표 블록</th></tr>
+        <tr><td>도형</td><td>삼각형, 이등변삼각형(꼭짓점·밑변), 정삼각형, 정사각형, 직사각형, 마름모, 평행사변형, 볼록다각형</td></tr>
+        <tr><td>점 위치</td><td>선분 위의 점, 직선 위의 점(연장선 포함), 중점, 내분점, 삼등분점, 두 직선의 교점, 수선의 발, 각의 이등분선 위의 점, 외심·내심·무게중심, 한 직선 위의 세 점</td></tr>
+        <tr><td>원</td><td>중심이 O인 원 위의 점, 반지름이 정해진 원, 지름, 접선, 한 원 위의 네 점</td></tr>
+        <tr><td>길이·각</td><td>길이 = 값, 두 길이가 같음, 길이의 비, ∠ = 값, 직각, 두 각이 같음, 두 각의 합, sin 값</td></tr>
+        <tr><td>관계</td><td>평행, 수직, 같은 쪽·반대쪽, 다각형의 내부, 한 직선 위에 있지 않음</td></tr>
+        <tr><td>표시·질문</td><td>선분 그리기(조건이 아니라 선만 긋기), 구하기: 각·길이·비·넓이·둘레·넓이의 비</td></tr>
+      </table></div>
+      <div class="tip"><b>각은 가운데 점이 꼭짓점</b>∠BAC처럼 쓰면 A가 꼭짓점입니다. 블록에서도 가운데 칸이 꼭짓점이고 밑줄로 표시됩니다.</div>
+    </section>
+
+    <section id="result">
+      <h2>4. 결과 읽기</h2>
+      <figure><a href="img/04-drawn.jpg"><img src="img/04-drawn.jpg" alt="그리기를 누른 뒤 작도판에 직각삼각형 ABC와 중점 E가 그려진 모습" loading="lazy"></a>
+        <figcaption>그리기를 누른 뒤. 작도에 쓴 원(점선)과 같은 길이 표시가 함께 그려집니다.</figcaption></figure>
+      <figure class="mid"><a href="img/05-notes.png"><img src="img/05-notes.png" alt="결과 메시지: 작도 인증 손잡이 3, angle(B, A, C) = 90, 수치 정밀도, 유도 사실 검사 통과" loading="lazy"></a>
+        <figcaption>문제 입력 아래에 나오는 결과 메시지</figcaption></figure>
+      <div class="table"><table>
+        <tr><th>메시지</th><th>뜻</th></tr>
+        <tr><td><b>작도 인증</b></td><td>자와 컴퍼스로 그리는 순서를 찾았고, 점을 움직여 보아도 조건이 계속 지켜지는 것을 확인했다는 뜻입니다.</td></tr>
+        <tr><td><b>손잡이 3</b></td><td>끌어서 움직일 수 있는 정도입니다. 3이면 도형 전체의 위치와 방향만 바뀌고 모양은 조건으로 정해져 있습니다.</td></tr>
+        <tr><td><b>남은 모양 자유도</b></td><td>조건이 모양을 다 정하지 않았을 때 나옵니다. 점을 끌면 길이·각도가 바뀌니, 조건이 빠지지 않았는지 확인하세요.</td></tr>
+        <tr><td><b>angle(B, A, C) = 90</b></td><td>“구하기”로 넣은 값을 실제로 잰 결과입니다.</td></tr>
+        <tr><td><b>수치 정밀도 · 유도 사실 검사</b></td><td>그린 도형이 조건과 추론한 성질을 오차 없이 만족하는지 검사한 결과입니다. ▶를 누르면 자세히 봅니다.</td></tr>
+      </table></div>
+      <h3>점을 끌어 보기</h3>
+      <p>왼쪽 도구가 <span class="ui">선택</span>(<kbd>Esc</kbd>)일 때 <b>자유점</b>을 끌면 연결된 도형이 함께 움직이고, 조건(길이·중점·수직 등)은 그대로 지켜집니다. 중점·교점처럼 다른 도형에서 정해지는 점은 직접 끌 수 없습니다. 점 이름 글자도 끌어서 옮길 수 있습니다.</p>
+    </section>
+
+    <section id="text">
+      <h2>5. 텍스트로 조건 쓰기</h2>
+      <p>블록 위의 <span class="ui">텍스트</span>를 누르면 같은 조건을 한 줄씩 글로 볼 수 있고, 여기서 바로 고쳐도 됩니다. 블록과 텍스트는 서로 자동으로 맞춰집니다. 익숙해지면 블록보다 빠릅니다.</p>
+      <figure class="mid"><a href="img/03-text.png"><img src="img/03-text.png" alt="텍스트 보기에서 조건이 한 줄씩 적힌 모습" loading="lazy"></a>
+        <figcaption>텍스트 보기</figcaption></figure>
+<pre><code>triangle(A, B, C)
+length(A, B) = 3
+length(A, C) = 4
+length(B, C) = 5
+midpoint(E: B, C)       # E는 BC의 중점
+draw(A, E)              # 선분 AE를 긋기만 함
+ask(angle(B, A, C))     # ∠BAC를 구하기</code></pre>
+      <div class="table"><table>
+        <tr><th>쓰는 법</th><th>뜻</th></tr>
+        <tr><td><code>triangle(A, B, C)</code></td><td>삼각형 ABC</td></tr>
+        <tr><td><code>length(A, B) = 5</code></td><td>AB의 길이는 5</td></tr>
+        <tr><td><code>angle(A, B, C) = 60</code></td><td>∠ABC = 60° (가운데가 꼭짓점)</td></tr>
+        <tr><td><code>right_angle(A, B, C)</code></td><td>∠ABC = 90°</td></tr>
+        <tr><td><code>midpoint(M: A, B)</code></td><td>M은 AB의 중점</td></tr>
+        <tr><td><code>on_segment(P: A, B)</code></td><td>P는 선분 AB 위의 점</td></tr>
+        <tr><td><code>foot(H: A; B, C)</code></td><td>H는 A에서 직선 BC에 내린 수선의 발</td></tr>
+        <tr><td><code>circumcenter(O: A, B, C)</code></td><td>O는 삼각형 ABC의 외심 (incenter·centroid도 같은 모양)</td></tr>
+        <tr><td><code>parallel(A, B, C, D)</code></td><td>AB ∥ CD (수직은 <code>perpendicular</code>)</td></tr>
+        <tr><td><code>eq_length(A, B, C, D)</code></td><td>AB = CD</td></tr>
+        <tr><td><code>draw(A, E)</code></td><td>선분 AE를 그림에 긋기 (조건 아님)</td></tr>
+        <tr><td><code>ask(length(A, E))</code></td><td>AE의 길이 구하기 (angle·area·perimeter·ratio도 가능)</td></tr>
+      </table></div>
+      <p class="muted">값에는 숫자와 사칙연산, <code>sqrt(3)</code>, <code>pi</code>, 삼각함수를 쓸 수 있습니다. <code>#</code> 뒤는 메모로 무시됩니다. 블록 목록에 있는 것은 모두 텍스트로도 쓸 수 있으니, 모르는 문법은 블록을 하나 넣고 텍스트 보기로 확인하세요.</p>
+    </section>
+
+    <section id="ai">
+      <h2>6. 그림·문장으로 입력하기 <small>AI · API 키와 사용료 필요</small></h2>
+      <p>시험지 사진이나 문제 문장을 넣으면 AI가 조건으로 바꿔 줍니다. 먼저 <a href="#keys">API 키</a>를 넣어야 합니다.</p>
+      <figure class="mid"><a href="img/15-ai.png"><img src="img/15-ai.png" alt="그림·문장 탭: 그림 붙여넣기 칸, 문제 문장 칸, 문장 모델 선택, IR 변환 버튼, 변환된 IR, 작도 버튼" loading="lazy"></a>
+        <figcaption>그림·문장 탭</figcaption></figure>
+      <ol class="steps">
+        <li><span class="ui">그림·문장</span> 탭을 누릅니다.</li>
+        <li>그림 칸에 문제 그림을 넣습니다. 캡처한 뒤 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여넣거나, 파일을 끌어다 놓거나, 칸을 클릭해 파일을 고릅니다. (그림 없이 문장만 넣어도 됩니다.)</li>
+        <li>문제 문장 칸에 문장을 붙여넣고, <span class="ui">문장</span> 목록에서 문장을 읽을 AI(GPT-6 Luna 또는 solar-pro4)를 고릅니다.</li>
+        <li><span class="ui">IR 변환</span>을 누르고 기다립니다. 끝나면 이번 변환의 예상 비용이 표시되고, 화면이 <span class="ui">블록·IR 입력</span> 탭으로 넘어가 변환된 조건이 블록으로 보입니다.</li>
+        <li><b>블록을 원래 문제와 꼭 비교</b>하고 틀린 부분을 고친 뒤 <span class="ui">▶ 그리기</span>를 누릅니다. (그림·문장 탭의 IR 칸을 직접 고치고 <span class="ui">작도</span>를 눌러도 됩니다.)</li>
+      </ol>
+      <div class="warn"><b>AI 변환은 틀릴 수 있습니다</b>점 이름이 바뀌거나 조건이 빠지기도 합니다. “남은 모양 자유도”가 나오면 조건이 빠졌다는 신호이니 원래 문제와 비교하세요. 인터넷과 본인 계정의 API 사용료가 필요합니다.</div>
+    </section>
+
+    <section id="polish">
+      <h2>7. 시험지용으로 다듬기</h2>
+      <h3>시험지 모양 ↔ 작도 모양</h3>
+      <p>처음에는 <b>시험지 모양</b>(검은 가는 선, 명조 글씨, 점 없이 이름만)으로 그려집니다. 도구 막대 오른쪽의 <span class="ui">A</span> 모양 버튼을 누르면 도형 종류를 색으로 구분하는 <b>작도 모양</b>으로 바뀌고, 다시 누르면 돌아옵니다. PNG와 그림 복사는 지금 보이는 모양 그대로 나갑니다.</p>
+      <figure><a href="img/08-exam-style.jpg"><img src="img/08-exam-style.jpg" alt="작도 모양: 점과 선이 색으로 구분된 같은 도형" loading="lazy"></a>
+        <figcaption>같은 도형의 작도 모양. 4장의 그림이 시험지 모양입니다.</figcaption></figure>
+      <h3>글꼴과 선 굵기</h3>
+      <figure class="narrow"><a href="img/09-font.png"><img src="img/09-font.png" alt="글꼴 크기 슬라이더와 숫자 입력 칸" loading="lazy"></a></figure>
+      <p><span class="ui">글꼴 1×</span>을 누르면 모든 글자(점 이름, 길이·각도 글자)의 크기를, <span class="ui">선 굵기 1×</span>는 모든 선의 굵기를 한 번에 바꿉니다. 슬라이더나 숫자로 조절하고 <span class="ui">1배로</span>로 되돌립니다. 글꼴은 0.25~6배, 선 굵기는 0.1~8배입니다.</p>
+      <h3>밑변을 수평으로</h3>
+      <ul>
+        <li><span class="ui">변 방향 고정</span>을 누르고 변을 클릭하면, 점을 끌어도 그 변이 항상 수평으로 유지됩니다. <span class="ui">고정 해제</span>로 풉니다.</li>
+        <li>한 번만 돌리고 싶으면 왼쪽 <span class="ui">선택</span> 도구 모음의 <b>밑변</b>(<kbd>B</kbd>)을 고르고 변을 클릭합니다. 길이·각도 관계는 그대로입니다.</li>
+      </ul>
+      <h3>개별 도형 고치기</h3>
+      <p>점·선·각도 표시 등을 클릭하면 위쪽에 <b>속성 막대</b>가 나옵니다. 여기서 이름, 선 모양(실선·파선·점선 등), 글자·호·눈금 크기, 점 찍기, 숨기기를 바꿉니다. 선택한 것은 <kbd>Delete</kbd>로 지우고, <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>로 되돌립니다.</p>
+      <div class="tip"><b>글자에 수식 넣기</b>점 이름·글자·각도 글자 칸에 <code>$ … $</code>로 감싸면 수식으로 그려집니다. 예: <code>$x$</code>, <code>$P_1$</code>, <code>$7\mathrm{cm}$</code>, <code>$\angle ABC = 30^\circ$</code>, <code>$\frac{1}{2}$</code>, <code>$\sqrt{3}$</code>.</div>
+    </section>
+
+    <section id="tools">
+      <h2>8. 작도 도구로 직접 그리기</h2>
+      <p>조건 입력 없이 마우스로 그리거나, 자동으로 그린 도형에 보조선·표시를 더할 때 씁니다. 왼쪽 도구 모음 버튼을 누르면 그 묶음의 도구 목록이 펼쳐집니다.</p>
+      <figure class="narrow"><a href="img/07-tools.png"><img src="img/07-tools.png" alt="선 도구 모음이 펼쳐진 모습: 선분, 길이 선분, 직선, 반직선, 평행선, 수선, 수선의 발, 수직이등분선, 각의 이등분선" loading="lazy"></a>
+        <figcaption>선 도구 모음. 오른쪽 글자는 단축키입니다.</figcaption></figure>
+      <div class="table"><table>
+        <tr><th>묶음</th><th>도구</th></tr>
+        <tr><td>선택</td><td>이동(<kbd>Esc</kbd>), 그룹선택(<kbd>G</kbd>, 끌어서 여러 개 선택), 밑변(<kbd>B</kbd>), 숨기기(<kbd>H</kbd>), 삭제</td></tr>
+        <tr><td>점</td><td>점(<kbd>D</kbd>), 교점(<kbd>I</kbd>), 중점(<kbd>M</kbd>)</td></tr>
+        <tr><td>선</td><td>선분(<kbd>S</kbd>), 길이 선분(길이를 입력), 직선(<kbd>L</kbd>), 반직선, 평행선, 수선, 수선의 발, 수직이등분선(<kbd>V</kbd>), 각의 이등분선</td></tr>
+        <tr><td>원</td><td>원(<kbd>C</kbd>: 중심 → 원 위의 점), 반지름 원(반지름을 입력)</td></tr>
+        <tr><td>다각형</td><td>다각형(<kbd>P</kbd>), 주어진 각(꼭짓점 → 기준점 → 각도 입력)</td></tr>
+        <tr><td>측정</td><td>길이, 각도</td></tr>
+        <tr><td>꾸미기</td><td>설명선(<kbd>E</kbd>: 선분 옆에 길이 글자), 각도 표시, 길이 표시(같은 길이 눈금), 글자(<kbd>T</kbd>), 지시선</td></tr>
+      </table></div>
+      <ul>
+        <li>점: 빈 곳을 클릭하면 자유점, 선·원 위를 클릭하면 그 위를 따라 움직이는 점이 생깁니다.</li>
+        <li>중점·수직이등분선: 두 점을 차례로 클릭하거나 선분을 한 번 클릭합니다.</li>
+        <li>다각형: 꼭짓점을 차례로 클릭하고 첫 점을 다시 클릭(또는 더블클릭)하면 완성됩니다.</li>
+        <li>각도(측정): 처음 고른 점이 꼭짓점입니다. 각의 이등분선은 세 점 중 가운데가 꼭짓점입니다.</li>
+        <li>화면: 휠로 확대·축소, 빈 곳 끌기로 이동. 오른쪽 위 버튼으로 원점 복귀, 격자·격자 스냅을 켭니다.</li>
+      </ul>
+    </section>
+
+    <section id="export">
+      <h2>9. PNG와 그림 복사</h2>
+      <ul>
+        <li><b>그림 복사</b>(주황 버튼, <kbd>Ctrl</kbd>+<kbd>C</kbd>): 그림을 클립보드에 복사합니다. 한글·워드·파워포인트에서 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여넣습니다.</li>
+        <li><b>PNG</b>(그림 아이콘): 이미지 파일로 내려받습니다. 시험지 모양이면 도형 부분만 잘라 3배 해상도로 저장합니다.</li>
+      </ul>
+      <p class="muted">시험지 모양에서는 격자 없이 내보냅니다. 글꼴·선 굵기 배율은 그대로 적용됩니다.</p>
+    </section>
+
+    <section id="sentence">
+      <h2>10. 문제 문장 만들기와 한글 복사</h2>
+      <p>블록으로 넣은 조건을 문제 문장으로 바꿔 줍니다. 블록·IR 입력 탭 아래의 <span class="ui">블록 → 문제 문장</span>을 펼칩니다. 블록을 고치면 문장도 바로 바뀝니다.</p>
+      <figure><a href="img/10-sentence.png"><img src="img/10-sentence.png" alt="블록에서 만든 문제 문장과 텍스트 복사, 텍스트 저장, 한글 문서 저장, 수식 포함 복사 버튼" loading="lazy"></a></figure>
+      <div class="table"><table>
+        <tr><th>버튼</th><th>하는 일</th></tr>
+        <tr><td><span class="ui">텍스트 복사</span></td><td>문장을 글자로 복사합니다. (∠, °, √, 분수 기호 포함)</td></tr>
+        <tr><td><span class="ui">텍스트 저장</span></td><td>문장을 .txt 파일로 내려받습니다.</td></tr>
+        <tr><td><span class="ui">한글 문서 저장</span></td><td>본문과 <b>한글 수식 개체</b>가 들어간 .hml 파일을 내려받습니다. 한글에서 열 수 있습니다.</td></tr>
+        <tr><td><span class="ui">수식 포함 복사</span></td><td>점 이름·숫자·식을 한글 수식 개체로 만든 뒤 복사합니다. 완료 메시지가 나오면 한글 문서에서 <kbd>Ctrl</kbd>+<kbd>V</kbd>. <b>한컴 한글이 설치된 PC</b>에서만 됩니다.</td></tr>
+        <tr><td><span class="ui">줄바꿈</span></td><td>문장마다 줄을 바꿉니다.</td></tr>
+        <tr><td><span class="ui">문제 만들기 포함</span></td><td>텍스트 복사 때 지금 답을 ③으로 둔 선택지 ①~⑤를 붙입니다.</td></tr>
+        <tr><td><span class="ui">한글 수식 편집기용 명령</span></td><td>식 하나씩 한글 수식 편집기에 붙일 명령(예: <code>ANGLE rm {ABE} = 40 DEG</code>)을 복사합니다.</td></tr>
+      </table></div>
+      <p class="muted">입력한 조건만 문장으로 옮기며, 프로그램이 추론한 성질은 덧붙이지 않습니다. 빈칸이 있거나 문장으로 바꿀 수 없는 조건이 있으면 오류를 보여 줍니다.</p>
+    </section>
+
+    <section id="save">
+      <h2>11. 로그인·저장·열기</h2>
+      <p>그리기는 로그인 없이 됩니다. <b>도면 저장·열기와 API 키</b>만 비밀번호가 필요합니다. 저장한 도면과 키는 이 비밀번호로 암호화됩니다.</p>
+      <h3>처음: 비밀번호 정하기</h3>
+      <figure class="narrow"><a href="img/11-login.png"><img src="img/11-login.png" alt="비밀번호 정하기 창: 비밀번호와 확인 입력 칸" loading="lazy"></a></figure>
+      <ol class="steps">
+        <li>도구 막대의 <span class="ui">로그인</span>을 누릅니다.</li>
+        <li>처음이면 <b>비밀번호 정하기</b> 창이 뜹니다. 8자 이상으로 두 번 입력하고 <span class="ui">비밀번호 정하기</span>를 누릅니다.</li>
+        <li>다음부터는 같은 버튼으로 로그인합니다. 프로그램을 끄거나 <span class="ui">로그아웃</span>할 때까지 유지됩니다.</li>
+      </ol>
+      <div class="warn"><b>비밀번호는 어디에도 저장되지 않습니다</b>잊어버리면 그 비밀번호로 저장한 도면과 API 키를 열 수 없고, 되찾을 방법도 없습니다. 꼭 따로 적어 두세요.</div>
+      <h3>저장</h3>
+      <figure class="narrow"><a href="img/12-save.png"><img src="img/12-save.png" alt="저장 그림 이름 입력 창" loading="lazy"></a></figure>
+      <ul>
+        <li><span class="ui">저장</span>(<kbd>Ctrl</kbd>+<kbd>S</kbd>): 처음이면 이름을 묻고, 열어 둔 도면이면 그 파일에 덮어씁니다.</li>
+        <li><span class="ui">다른 이름으로 저장</span>(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>): 새 이름으로 저장합니다. 같은 이름이 있으면 덮어쓸지 묻습니다.</li>
+        <li>문제 입력으로 만든 도면은 <b>입력한 조건도 함께</b> 저장됩니다. 나중에 열면 입력창에 조건이 되살아나 고쳐서 다시 그릴 수 있습니다.</li>
+      </ul>
+      <h3>열기</h3>
+      <figure><a href="img/13-open.jpg"><img src="img/13-open.jpg" alt="저장 그림 불러오기 창: 왼쪽에 미리보기 목록, 오른쪽에 큰 미리보기와 이 그림 열기 버튼" loading="lazy"></a></figure>
+      <p><span class="ui">열기</span>를 누르면 저장한 도면이 미리보기로 나옵니다. 이름으로 찾고, 고르면 오른쪽에 크게 보입니다. 더블클릭하거나 <span class="ui">이 그림 열기</span>로 엽니다. 다른 폴더의 파일은 <span class="ui">다른 위치의 파일…</span>로 열거나 작도판에 끌어다 놓습니다.</p>
+      <p class="muted"><span class="ui">새로</span>는 빈 작도판을 엽니다. 작업 중인 내용은 브라우저에 자동으로 보관되어 다음에 열 때 되살아나지만, 이것은 암호화되지 않는 임시 보관이니 중요한 도면은 저장하세요.</p>
+    </section>
+
+    <section id="keys">
+      <h2>12. API 키 넣기 <small>그림·문장 AI 변환을 쓸 때만</small></h2>
+      <figure class="mid"><a href="img/14-keys.png"><img src="img/14-keys.png" alt="API 키 창: OpenAI와 Upstage 키 입력 칸" loading="lazy"></a></figure>
+      <ol class="steps">
+        <li>OpenAI(그림·문장) 또는 Upstage(문장, solar-pro4) 웹사이트에서 본인 계정의 API 키를 만듭니다. 사용량만큼 요금이 나갑니다.</li>
+        <li>작도판에서 <a href="#save">로그인</a>한 뒤 도구 막대의 <span class="ui">API 키</span>를 누릅니다.</li>
+        <li>해당 칸에 키를 붙여넣고 <span class="ui">저장</span>을 누릅니다. 저장된 키는 앞뒤 몇 글자만 보입니다. 지우려면 칸을 비우고 저장합니다.</li>
+      </ol>
+      <p class="muted">키는 비밀번호로 암호화해 이 컴퓨터에만 보관하며 프로그램을 다시 켜면 로그인해야 다시 쓰입니다. Windows 환경변수 <code>OPENAI_API</code>(또는 <code>OPENAI_API_KEY</code>)·<code>UPSTAGE_API</code>로 넣어도 됩니다.</p>
+    </section>
+
+    <section id="relation">
+      <h2>13. 큰 관계 블록 편집기</h2>
+      <p>외심, 교점처럼 “무엇의 무엇”인 관계를 상자에 끼워 넣듯 만드는 넓은 편집기입니다. 문제 입력의 <span class="ui">큰 관계 블록 편집기 ↗</span>를 누르면 새 탭에서 열립니다.</p>
+      <figure><a href="img/16-relation.jpg"><img src="img/16-relation.jpg" alt="관계 블록 편집기: 왼쪽 블록 모음, 가운데 외심과 교점 관계 블록, 오른쪽 도형 미리보기" loading="lazy"></a></figure>
+      <ol class="steps">
+        <li>왼쪽 <b>점 만들기</b>(외심·무게중심·내심·교점·중점·수선의 발 등)를 클릭해 추가합니다.</li>
+        <li>관계 블록의 <b>대상</b> 칸에 도형(삼각형·선분·직선)을 고르고 점 이름을 씁니다. 외심 안에 삼각형 ABC만 넣으면 삼각형 조건은 자동으로 만들어집니다.</li>
+        <li><span class="ui">블록으로 작도</span>를 누르면 오른쪽에 미리보기가 나옵니다. <span class="ui">결과를 작도판에서 열기</span>로 작도판으로 가져가 다듬습니다.</li>
+      </ol>
+      <p class="muted"><span class="ui">외심·교점 예시</span>로 예시를 넣어 볼 수 있고, <span class="ui">블록 저장</span>/<span class="ui">블록 열기</span>로 작업대를 파일로 보관합니다. 아래쪽에서 문제 문장 복사도 같은 방식으로 됩니다.</p>
+    </section>
+
+    <section id="update">
+      <h2>14. 업데이트와 저장 위치</h2>
+      <h3>업데이트</h3>
+      <ol class="steps">
+        <li>작업을 저장합니다.</li>
+        <li>실행 창의 <span class="ui">업데이트 하기</span>를 누릅니다. 최신 버전이면 “현재 최신 버전입니다”가 나옵니다.</li>
+        <li>새 버전이 있으면 내려받아 확인한 뒤 프로그램이 스스로 교체하고 다시 켜집니다. 저장한 도면·비밀번호·API 키는 그대로입니다.</li>
+      </ol>
+      <p class="muted">새 버전은 개발자 서명과 파일 해시가 모두 맞을 때만 설치되고, 새 버전이 켜지지 않으면 이전 버전으로 되돌아갑니다. 이전 exe 하나는 같은 폴더에 <code>.previous</code>로 남습니다. <b>1.0.13 이하</b>를 쓰고 있다면 <a href="../">처음 화면</a>에서 한 번만 새로 받아 바꿔 주세요.</p>
+      <h3>저장 위치</h3>
+      <div class="table"><table>
+        <tr><th>폴더</th><th>들어 있는 것</th></tr>
+        <tr><td><code>%LOCALAPPDATA%\GeometryDrawer\diagrams_sources</code></td><td>저장한 도면 (암호화)</td></tr>
+        <tr><td><code>…\GeometryDrawer\data\secure</code></td><td>비밀번호 확인 정보와 암호화된 API 키</td></tr>
+        <tr><td><code>…\GeometryDrawer\data\ingest_runs</code></td><td>입력 기록</td></tr>
+        <tr><td><code>…\GeometryDrawer\logs</code></td><td>실행 기록 (문제가 생겼을 때 확인)</td></tr>
+      </table></div>
+      <p class="muted">실행 창의 <span class="ui">저장 폴더</span>로 바로 열 수 있습니다. exe를 옮기거나 지워도 이 폴더는 남습니다. 다른 컴퓨터로 옮길 때는 이 폴더를 통째로 복사하면 됩니다(같은 비밀번호로 엽니다).</p>
+    </section>
+
+    <section id="trouble">
+      <h2>15. 문제 해결</h2>
+      <div class="table"><table>
+        <tr><th>증상</th><th>해결</th></tr>
+        <tr><td>브라우저가 안 열려요</td><td>실행 창의 <span class="ui">작도판 열기</span>를 누릅니다. 실행 창에 나온 주소(<code>http://127.0.0.1:…</code>)를 브라우저에 직접 넣어도 됩니다.</td></tr>
+        <tr><td>“30초 안에 작도하지 못해 중단했습니다”</td><td>조건이 서로 맞지 않거나(예: 세 변의 길이가 삼각형이 될 수 없음) 너무 많을 때 나옵니다. 조건을 확인하거나 줄여서 다시 그리세요.</td></tr>
+        <tr><td>“남은 모양 자유도”가 나와요</td><td>조건이 모양을 다 정하지 못했습니다. 길이·각 조건이 빠지지 않았는지 확인하세요. 일부러 비워 둔 경우라면 그대로 써도 됩니다.</td></tr>
+        <tr><td>열기·저장이 눌리지 않아요</td><td><a href="#save">로그인</a>이 필요합니다(자물쇠 표시).</td></tr>
+        <tr><td>IR 변환이 안 돼요</td><td>인터넷 연결과 <a href="#keys">API 키</a>를 확인하세요. 키를 넣은 뒤 프로그램을 다시 켰다면 로그인해야 키가 쓰입니다.</td></tr>
+        <tr><td>수식 포함 복사가 안 돼요</td><td>한컴 한글이 설치된 Windows에서만 됩니다. 한글에 열린 대화상자가 있으면 닫고 다시 누르세요. 대신 <span class="ui">한글 문서 저장</span>(.hml)을 쓸 수 있습니다.</td></tr>
+        <tr><td>업데이트가 실패해요</td><td>exe가 쓰기 가능한 폴더(바탕화면·문서)에 있는지 확인하세요. 실패해도 기존 버전은 그대로입니다.</td></tr>
+        <tr><td>“Windows의 PC 보호” 창</td><td><span class="ui">추가 정보</span> → <span class="ui">실행</span>. <a href="../">처음 화면</a>의 SHA-256과 비교하면 받은 파일이 맞는지 확인할 수 있습니다.</td></tr>
+        <tr><td>그 밖의 오류</td><td>실행 창의 <span class="ui">저장 폴더</span> → <code>logs</code>의 가장 최근 파일을 확인하세요.</td></tr>
+      </table></div>
+    </section>
+
+    <footer>
+      <a href="../">처음 화면</a> ·
+      <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases">모든 버전과 변경 기록</a> ·
+      <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/THIRD_PARTY_LICENSES.txt">오픈소스 라이선스</a>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement, key = 'gd-theme', order = ['', 'light', 'dark'];
+  var label = { '': '테마: 자동', light: '테마: 밝게', dark: '테마: 어둡게' };
+  var btn = document.getElementById('theme'), saved = '';
+  function apply(t) { if (t) root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); btn.textContent = label[t]; }
+  try { saved = localStorage.getItem(key) || ''; } catch (e) {}
+  apply(order.indexOf(saved) >= 0 ? saved : '');
+  btn.addEventListener('click', function () {
+    var next = order[(order.indexOf(root.getAttribute('data-theme') || '') + 1) % order.length];
+    apply(next);
+    try { localStorage.setItem(key, next); } catch (e) {}
+  });
+  // Highlight the section being read in the table of contents.
+  var links = [].slice.call(document.querySelectorAll('.toc a'));
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id); });
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+    document.querySelectorAll('main section').forEach(function (s) { io.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>
