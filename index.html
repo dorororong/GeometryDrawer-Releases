@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geometry Drawer</title>
+<meta name="description" content="조건을 입력하면 자와 컴퍼스 작도 순서를 찾고, 움직여도 조건이 지켜지는지 인증한 도형을 그려 주는 Windows 프로그램">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 26 L27 26 L19 6 Z' fill='none' stroke='%232f6fde' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #fbfbfa; --surface: #ffffff; --ink: #1d2126; --muted: #5d6570; --line: #e3e5e8;
+    --accent: #2f6fde; --accent-ink: #ffffff; --accent-soft: #e9f0fd; --construct: #9aa3ae; --ok: #1f8a4c;
+    --shadow: 0 1px 2px rgb(16 24 40 / .06), 0 8px 24px rgb(16 24 40 / .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121417; --surface: #1a1d21; --ink: #e8eaed; --muted: #a0a7b1; --line: #2c3036;
+      --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --construct: #5c6470; --ok: #4cc283;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121417; --surface: #1a1d21; --ink: #e8eaed; --muted: #a0a7b1; --line: #2c3036;
+    --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --construct: #5c6470; --ok: #4cc283;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.7 "Pretendard", "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    word-break: keep-all; overflow-wrap: anywhere;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; }
+  .brand svg { width: 26px; height: 26px; }
+  .top nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
+  .top nav a:hover { color: var(--ink); }
+
+  .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; padding: 40px 0 64px; }
+  h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.25; letter-spacing: -.02em; margin: 0 0 18px; }
+  .lead { font-size: 18px; color: var(--muted); margin: 0 0 28px; max-width: 34em; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 10px;
+    background: var(--accent); color: var(--accent-ink); font-weight: 700; text-decoration: none; font-size: 17px;
+    box-shadow: var(--shadow); transition: transform .12s ease, filter .12s ease;
+  }
+  .btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .btn[aria-disabled="true"] { background: var(--line); color: var(--muted); pointer-events: none; box-shadow: none; }
+  .btn svg { width: 20px; height: 20px; }
+  .meta { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  .figure { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; box-shadow: var(--shadow); }
+  .figure svg { display: block; width: 100%; height: auto; }
+  .figure figcaption { font-size: 13px; color: var(--muted); padding: 4px 8px 2px; }
+
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 26px; letter-spacing: -.01em; margin: 0 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; counter-reset: step; }
+  .flow div {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px;
+    font-size: 15px; line-height: 1.5;
+  }
+  .flow div::before {
+    counter-increment: step; content: counter(step); display: inline-grid; place-items: center;
+    width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+    font-weight: 700; font-size: 13px; margin-bottom: 8px;
+  }
+  .flow b { display: block; margin-bottom: 2px; }
+  .flow span { color: var(--muted); font-size: 14px; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .card h3 { font-size: 17px; margin: 0 0 6px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+
+  .steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; max-width: 760px; }
+  .steps li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
+  .steps .n { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; color: var(--accent); background: var(--surface); }
+  .steps p { margin: 4px 0 0; }
+  .note { margin-top: 22px; max-width: 760px; background: var(--accent-soft); border-radius: 12px; padding: 16px 18px; font-size: 15px; }
+  .note b { display: block; margin-bottom: 4px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 40px; }
+  .two h3 { font-size: 17px; margin: 0 0 6px; }
+  .two p, .two ul { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
+  .two ul { padding-left: 18px; }
+  code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .92em; }
+  code { background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; color: var(--ink); }
+  .hash { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: var(--muted); word-break: break-all; }
+
+  details { border-bottom: 1px solid var(--line); padding: 14px 0; max-width: 760px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 48px; color: var(--muted); font-size: 14px; }
+  footer a { color: var(--muted); }
+  .theme { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; margin-left: 18px; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-top: 16px; gap: 28px; }
+    .flow { grid-template-columns: 1fr 1fr; }
+    .cards, .two { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .wrap { padding: 0 16px; }
+    .top nav a { display: none; }
+    .brand { white-space: nowrap; }
+    .flow { grid-template-columns: 1fr; }
+    .btn { width: 100%; justify-content: center; }
+    section { padding: 44px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 26 L27 26 L19 6 Z" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/></svg>
+      Geometry Drawer
+    </div>
+    <nav>
+      <a href="#how">작동 방식</a>
+      <a href="#install">설치</a>
+      <a href="#faq">자주 묻는 질문</a>
+      <button class="theme" id="theme" type="button" aria-label="화면 테마 바꾸기">테마</button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>조건만 적으면,<br>작도 순서까지 맞는 도형을</h1>
+        <p class="lead">“AB = 5, ∠C = 90°” 같은 조건을 입력하면 자와 컴퍼스로 그리는 순서를 찾고, 점을 움직여도 조건이 지켜지는지 확인한 도형을 그려 줍니다. 시험지·학습지용 그림을 Windows에서 바로 만듭니다.</p>
+        <div class="cta">
+          <a class="btn" id="download" href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/GeometryDrawer.exe">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="download-label">Windows용 다운로드</span>
+          </a>
+          <div class="meta" id="release-meta">Windows 10·11 (64비트) · 설치 없이 실행</div>
+        </div>
+      </div>
+      <figure class="figure" aria-label="삼각형의 외접원을 작도하는 예시 그림">
+        <svg viewBox="40 52 420 356" role="img">
+          <g fill="none" stroke="var(--construct)" stroke-width="1.4" stroke-linecap="round">
+            <path d="M194.2 131.7 A180 180 0 0 1 223.5 168.0"/><path d="M196.5 168.0 A180 180 0 0 1 225.8 131.7"/>
+            <path d="M223.5 356.0 A180 180 0 0 1 194.2 392.3"/><path d="M225.8 392.3 A180 180 0 0 1 196.5 356.0"/>
+            <path d="M407.0 91.3 A180 180 0 0 1 449.0 111.6"/><path d="M430.0 76.7 A180 180 0 0 1 424.3 123.1"/>
+            <path d="M170.0 263.3 A180 180 0 0 1 175.7 216.9"/><path d="M193.0 248.7 A180 180 0 0 1 151.0 228.4"/>
+            <path d="M210 128 L210 396" stroke-dasharray="5 5"/>
+            <path d="M440 94 L150 252" stroke-dasharray="5 5"/>
+          </g>
+          <circle cx="210" cy="218.9" r="146.5" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
+          <path d="M70 262 L350 262 L250 78 Z" fill="var(--accent-soft)" fill-opacity=".55" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>
+          <g fill="var(--ink)">
+            <circle cx="70" cy="262" r="4.5"/><circle cx="350" cy="262" r="4.5"/><circle cx="250" cy="78" r="4.5"/>
+            <circle cx="210" cy="218.9" r="4" fill="var(--accent)"/>
+          </g>
+          <g font-size="19" font-style="italic" font-family="Times New Roman, serif" fill="var(--ink)">
+            <text x="48" y="282">A</text><text x="358" y="284">B</text><text x="258" y="70">C</text>
+            <text x="218" y="214" fill="var(--accent)">O</text>
+          </g>
+        </svg>
+        <figcaption>예: 두 변의 수직이등분선을 작도해 외심 O와 외접원을 찾는 순서</figcaption>
+      </figure>
+    </div>
+
+    <section id="how">
+      <h2>작동 방식</h2>
+      <p class="sub">그림을 “그럴듯하게” 맞추는 대신, 조건에서 출발해 작도하고 검증합니다.</p>
+      <div class="flow">
+        <div><b>입력</b><span>조건을 직접 쓰거나, 문제 그림·문장을 AI로 변환</span></div>
+        <div><b>조건 확인</b><span>변환된 조건(IR)을 보고 고칠 수 있음</span></div>
+        <div><b>추론·초안</b><span>숨은 사실을 찾고 조건을 만족하는 배치를 계산</span></div>
+        <div><b>작도</b><span>자와 컴퍼스로 그리는 순서를 구성</span></div>
+        <div><b>인증</b><span>점을 움직여 보며 조건이 계속 지켜지는지 확인</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>할 수 있는 것</h2>
+      <p class="sub">작도판은 기본 브라우저에서 열립니다. 별도 브라우저나 Python 설치는 필요 없습니다.</p>
+      <div class="cards">
+        <div class="card"><h3>직접 조건 입력</h3><p>블록이나 한 줄짜리 조건으로 입력합니다. API 키나 인터넷 없이 쓸 수 있습니다.</p></div>
+        <div class="card"><h3>그림·문장 변환 (선택)</h3><p>문제 사진이나 문장을 조건으로 바꿉니다. 본인의 OpenAI·Upstage API 키가 필요하고 사용료가 듭니다.</p></div>
+        <div class="card"><h3>시험지용 마무리</h3><p>글꼴·선 굵기 조절, 변 방향 고정, PNG 내보내기, 그림 복사, 문장 편집, 도면 저장·열기.</p></div>
+        <div class="card"><h3>한글 수식 복사</h3><p>문장과 수식을 한컴 한글의 수식 개체로 복사합니다. 한글이 설치된 PC에서 동작합니다.</p></div>
+        <div class="card"><h3>내 PC에만 저장</h3><p>도면과 설정은 내 컴퓨터에만 남습니다. API 키는 비밀번호로 암호화해 보관합니다.</p></div>
+        <div class="card"><h3>버튼 한 번으로 업데이트</h3><p>실행 창의 ‘업데이트 하기’가 새 버전을 받아 확인한 뒤 교체하고 다시 실행합니다.</p></div>
+      </div>
+    </section>
+
+    <section id="install">
+      <h2>설치와 실행</h2>
+      <p class="sub">설치 과정이 없는 단일 실행 파일입니다.</p>
+      <ol class="steps">
+        <li><span class="n">1</span><div><b>다운로드</b><p>위의 버튼으로 <code>GeometryDrawer.exe</code>를 받아 원하는 폴더(예: 바탕화면, 문서)에 둡니다. 업데이트를 위해 쓰기 가능한 폴더가 좋습니다.</p></div></li>
+        <li><span class="n">2</span><div><b>실행</b><p>더블클릭하면 작은 실행 창이 뜨고 기본 브라우저에 작도판이 열립니다. 첫 실행은 몇 초 걸릴 수 있습니다.</p></div></li>
+        <li><span class="n">3</span><div><b>종료</b><p>실행 창을 닫으면 프로그램이 끝납니다. 그 전에 작업을 저장하세요.</p></div></li>
+      </ol>
+      <div class="note">
+        <b>“Windows의 PC 보호” 창이 뜨면</b>
+        아직 코드 서명 인증서가 없어 처음 실행할 때 나타날 수 있습니다. <b style="display:inline">추가 정보 → 실행</b>을 누르세요. 받은 파일이 이 페이지에 적힌 SHA-256과 같은지 확인하려면 PowerShell에서 <code>Get-FileHash GeometryDrawer.exe</code>를 실행해 비교하면 됩니다.
+      </div>
+    </section>
+
+    <section>
+      <h2>안전과 개인정보</h2>
+      <p class="sub">무엇이 어디에 저장되고, 업데이트가 어떻게 확인되는지.</p>
+      <div class="two">
+        <div>
+          <h3>저장 위치</h3>
+          <p><code>%LOCALAPPDATA%\GeometryDrawer</code>에 저장합니다. exe를 옮기거나 업데이트해도 그대로 남습니다.</p>
+          <ul>
+            <li>저장한 도면은 비밀번호로 암호화</li>
+            <li>API 키는 exe에 들어 있지 않고, 입력한 키도 암호화해 보관</li>
+            <li>작도판은 이 PC 안에서만 열리는 주소(127.0.0.1)로 동작하고, 다른 웹사이트는 접근할 수 없음</li>
+          </ul>
+        </div>
+        <div>
+          <h3>업데이트 확인</h3>
+          <p>새 버전 정보에는 개발자의 서명이 붙어 있습니다. 프로그램은 서명과 파일 해시가 모두 맞을 때만 교체하고, 새 버전이 시작되지 않으면 이전 버전으로 되돌립니다. 저장한 도면·비밀번호·API 키는 유지됩니다.</p>
+          <p class="hash" id="hash"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <h2>자주 묻는 질문</h2>
+      <details><summary>인터넷이 꼭 필요한가요?</summary><p>직접 조건을 입력해 작도하는 기능은 인터넷 없이 됩니다. 그림·문장 AI 변환과 업데이트 확인에만 인터넷이 필요합니다.</p></details>
+      <details><summary>AI 변환은 어떻게 켜나요?</summary><p>작도판의 ‘로그인’에서 비밀번호를 정한 뒤 ‘API 키’에 본인의 키를 입력합니다. 비밀번호는 8자 이상이며 저장되지 않으니 잊지 않도록 해 주세요. 잊으면 암호화된 도면과 키를 열 수 없습니다.</p></details>
+      <details><summary>작도가 끝나지 않으면?</summary><p>한 도형당 30초가 지나면 자동으로 멈춥니다. 조건이 너무 많거나 서로 맞지 않는 경우가 많으니, 조건을 확인하거나 줄여서 다시 시도하세요.</p></details>
+      <details><summary>문제가 생기면 어디를 보나요?</summary><p>실행 창의 ‘저장 폴더’를 누르면 열리는 폴더의 <code>logs</code>에 실행 기록이 있습니다. 8765 포트가 사용 중이면 다른 포트를 자동으로 고릅니다.</p></details>
+      <details><summary>이전 버전을 쓰고 있어요 (1.0.13 이하)</summary><p>이전 버전은 업데이트 위치가 달라서 버튼으로 새 버전을 받지 못합니다. 이 페이지에서 한 번만 새로 받아 기존 파일을 바꿔 주세요. 그 뒤로는 ‘업데이트 하기’로 받을 수 있습니다.</p></details>
+    </section>
+  </main>
+
+  <footer>
+    <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases">모든 버전과 변경 기록</a> ·
+    <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/THIRD_PARTY_LICENSES.txt">오픈소스 라이선스</a> ·
+    <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/UserGuide.txt">사용 안내(텍스트)</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // Theme: follows the system; the button cycles system → light → dark and remembers the choice.
+  var root = document.documentElement, key = 'gd-theme', order = ['', 'light', 'dark'];
+  var label = { '': '테마: 자동', light: '테마: 밝게', dark: '테마: 어둡게' };
+  function apply(t) { if (t) root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); btn.textContent = label[t]; }
+  var btn = document.getElementById('theme'), saved = '';
+  try { saved = localStorage.getItem(key) || ''; } catch (e) {}
+  apply(order.indexOf(saved) >= 0 ? saved : '');
+  btn.addEventListener('click', function () {
+    var next = order[(order.indexOf(root.getAttribute('data-theme') || '') + 1) % order.length];
+    apply(next);
+    try { localStorage.setItem(key, next); } catch (e) {}
+  });
+
+  // Latest release: version, date, size and SHA-256 from the public GitHub API.
+  var meta = document.getElementById('release-meta'), hash = document.getElementById('hash');
+  var link = document.getElementById('download'), text = document.getElementById('download-label');
+  fetch('https://api.github.com/repos/dorororong/GeometryDrawer-Releases/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+    .then(function (r) {
+      if (r.status === 404) throw 'none';
+      if (!r.ok) throw 'error';
+      return r.json();
+    })
+    .then(function (rel) {
+      var exe = (rel.assets || []).filter(function (a) { return a.name === 'GeometryDrawer.exe'; })[0];
+      if (!exe) throw 'none';
+      var date = new Date(rel.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+      var mb = (exe.size / 1048576).toFixed(0);
+      meta.innerHTML = '';
+      var b = document.createElement('b'); b.textContent = '버전 ' + rel.tag_name.replace(/^v/, '');
+      meta.appendChild(b);
+      meta.appendChild(document.createTextNode(' · ' + date + ' · ' + mb + 'MB'));
+      meta.appendChild(document.createElement('br'));
+      meta.appendChild(document.createTextNode('Windows 10·11 (64비트) · 설치 없이 실행'));
+      var digest = exe.digest || (String(rel.body || '').match(/SHA-256:\s*`?([a-f0-9]{64})/) || [])[1];
+      if (digest) hash.textContent = 'SHA-256 (' + rel.tag_name + '): ' + String(digest).replace(/^sha256:/, '');
+    })
+    .catch(function (why) {
+      if (why === 'none') {
+        link.setAttribute('aria-disabled', 'true');
+        link.removeAttribute('href');
+        text.textContent = '첫 배포 준비 중';
+        meta.textContent = '곧 다운로드할 수 있습니다.';
+      }
+      // other failures (rate limit, offline): keep the direct download link as is
+    });
+})();
+</script>
+</body>
+</html>
