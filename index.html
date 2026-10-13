@@ -4,213 +4,499 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Geometry Drawer</title>
-<meta name="description" content="조건을 입력하면 자와 컴퍼스 작도 순서를 찾고, 움직여도 조건이 지켜지는지 인증한 도형을 그려 주는 Windows 프로그램">
+<meta name="description" content="블록으로 조건을 쌓으면 움직여도 조건이 지켜지는 기하 그림을 그리고, 시험지 양식으로 다듬어 한글에 바로 붙여 넣는 Windows 프로그램">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 26 L27 26 L19 6 Z' fill='none' stroke='%232f6fde' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
-    --bg: #fbfbfa; --surface: #ffffff; --ink: #1d2126; --muted: #5d6570; --line: #e3e5e8;
-    --accent: #2f6fde; --accent-ink: #ffffff; --accent-soft: #e9f0fd; --construct: #9aa3ae; --ok: #1f8a4c;
-    --shadow: 0 1px 2px rgb(16 24 40 / .06), 0 8px 24px rgb(16 24 40 / .06);
+    --bg: #fbfbfa; --bg-alt: #f3f4f6; --surface: #ffffff; --ink: #1a1e24; --muted: #5b6370; --line: #e3e5e8;
+    --accent: #2f6fde; --accent-ink: #ffffff; --accent-soft: #e9f0fd; --ok: #1f8a4c;
+    --f1: #2f6fde; --f1-soft: #e8effc;
+    --f2: #e0700b; --f2-soft: #fdf0e3;
+    --f3: #0e8584; --f3-soft: #e2f4f3;
+    --f4: #7b4fd6; --f4-soft: #f0eafc;
+    --paper: #ffffff; --paper-ink: #111111;
+    --shadow: 0 1px 2px rgb(16 24 40 / .05), 0 10px 30px rgb(16 24 40 / .08);
+    --shadow-lg: 0 2px 4px rgb(16 24 40 / .05), 0 24px 60px rgb(16 24 40 / .14);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #121417; --surface: #1a1d21; --ink: #e8eaed; --muted: #a0a7b1; --line: #2c3036;
-      --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --construct: #5c6470; --ok: #4cc283;
-      --shadow: none;
+      --bg: #111316; --bg-alt: #16191d; --surface: #1b1f24; --ink: #e8eaed; --muted: #a0a7b1; --line: #2b3037;
+      --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --ok: #4cc283;
+      --f1: #78a2f2; --f1-soft: #1c2840;
+      --f2: #f5a052; --f2-soft: #33251a;
+      --f3: #4cc6c2; --f3-soft: #14302f;
+      --f4: #ad8cf2; --f4-soft: #2a2140;
+      --shadow: none; --shadow-lg: 0 24px 60px rgb(0 0 0 / .45);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #121417; --surface: #1a1d21; --ink: #e8eaed; --muted: #a0a7b1; --line: #2c3036;
-    --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --construct: #5c6470; --ok: #4cc283;
-    --shadow: none;
+    --bg: #111316; --bg-alt: #16191d; --surface: #1b1f24; --ink: #e8eaed; --muted: #a0a7b1; --line: #2b3037;
+    --accent: #6e9cf0; --accent-ink: #0d1420; --accent-soft: #1d2a40; --ok: #4cc283;
+    --f1: #78a2f2; --f1-soft: #1c2840;
+    --f2: #f5a052; --f2-soft: #33251a;
+    --f3: #4cc6c2; --f3-soft: #14302f;
+    --f4: #ad8cf2; --f4-soft: #2a2140;
+    --shadow: none; --shadow-lg: 0 24px 60px rgb(0 0 0 / .45);
   }
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font: 16px/1.7 "Pretendard", "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    font: 16px/1.7 "Pretendard Variable", "Pretendard", "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
     word-break: keep-all; overflow-wrap: anywhere;
   }
   a { color: var(--accent); }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
-  header.top { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; }
-  .brand svg { width: 26px; height: 26px; }
-  .top nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
-  .top nav a:hover { color: var(--ink); }
+  img { max-width: 100%; height: auto; display: block; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .9em; background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; }
 
-  .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; padding: 40px 0 64px; }
-  h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.25; letter-spacing: -.02em; margin: 0 0 18px; }
-  .lead { font-size: 18px; color: var(--muted); margin: 0 0 28px; max-width: 34em; }
+  /* Header */
+  header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid transparent; }
+  header.top.scrolled { border-bottom-color: var(--line); }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); text-decoration: none; white-space: nowrap; }
+  .brand svg { width: 26px; height: 26px; }
+  .top nav { display: flex; align-items: center; gap: 22px; }
+  .top nav a { color: var(--muted); text-decoration: none; font-size: 15px; }
+  .top nav a:hover { color: var(--ink); }
+  .theme { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  .top .mini { background: var(--accent); color: var(--accent-ink); padding: 7px 14px; border-radius: 8px; font-weight: 700; font-size: 14px; }
+  .top .mini:hover { color: var(--accent-ink); filter: brightness(1.06); }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: .92fr 1.08fr; gap: 48px; align-items: center; padding: 56px 0 40px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 5px 12px; border-radius: 999px; margin-bottom: 20px; }
+  h1 { font-size: clamp(32px, 4.6vw, 52px); line-height: 1.2; letter-spacing: -.03em; margin: 0 0 20px; font-weight: 800; }
+  h1 .hl { background: linear-gradient(90deg, var(--f1), var(--f4)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { font-size: 18px; color: var(--muted); margin: 0 0 30px; max-width: 32em; }
   .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
   .btn {
-    display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 10px;
+    display: inline-flex; align-items: center; gap: 10px; padding: 15px 24px; border-radius: 12px;
     background: var(--accent); color: var(--accent-ink); font-weight: 700; text-decoration: none; font-size: 17px;
     box-shadow: var(--shadow); transition: transform .12s ease, filter .12s ease;
   }
   .btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
   .btn[aria-disabled="true"] { background: var(--line); color: var(--muted); pointer-events: none; box-shadow: none; }
   .btn svg { width: 20px; height: 20px; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
   .meta { color: var(--muted); font-size: 14px; line-height: 1.5; }
   .meta b { color: var(--ink); font-weight: 600; }
-  .figure { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; box-shadow: var(--shadow); }
-  .figure svg { display: block; width: 100%; height: auto; }
-  .figure figcaption { font-size: 13px; color: var(--muted); padding: 4px 8px 2px; }
 
-  section { padding: 56px 0; border-top: 1px solid var(--line); }
-  h2 { font-size: 26px; letter-spacing: -.01em; margin: 0 0 8px; }
-  .sub { color: var(--muted); margin: 0 0 28px; }
-  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; counter-reset: step; }
-  .flow div {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px;
-    font-size: 15px; line-height: 1.5;
+  .window { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-lg); }
+  .window .bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--bg-alt); }
+  .window .bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .window .bar span { margin-left: 8px; font-size: 12px; color: var(--muted); }
+  .window img { width: 100%; height: auto; background: #fff; }
+
+  /* At a glance */
+  .glance { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 8px 0 72px; }
+  .tile {
+    position: relative; display: block; text-decoration: none; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px 20px;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
   }
-  .flow div::before {
-    counter-increment: step; content: counter(step); display: inline-grid; place-items: center;
-    width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
-    font-weight: 700; font-size: 13px; margin-bottom: 8px;
+  .tile:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--c); }
+  .tile .ico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--cs); color: var(--c); margin-bottom: 16px; }
+  .tile .ico svg { width: 24px; height: 24px; }
+  .tile .no { position: absolute; top: 18px; right: 20px; font-weight: 800; font-size: 14px; color: var(--c); letter-spacing: .02em; }
+  .tile h3 { margin: 0 0 6px; font-size: 17.5px; letter-spacing: -.01em; }
+  .tile p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+  .tile .go { display: inline-block; margin-top: 12px; font-size: 13.5px; font-weight: 600; color: var(--c); }
+  .c1 { --c: var(--f1); --cs: var(--f1-soft); }
+  .c2 { --c: var(--f2); --cs: var(--f2-soft); }
+  .c3 { --c: var(--f3); --cs: var(--f3-soft); }
+  .c4 { --c: var(--f4); --cs: var(--f4-soft); }
+
+  /* Feature sections */
+  .feature { padding: 88px 0; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
+  .feature:nth-of-type(even) { background: var(--bg-alt); }
+  .feature .wrap { display: grid; grid-template-columns: 1fr 1.1fr; gap: 56px; align-items: center; }
+  .feature.flip .text { order: 2; }
+  .feature.wide .wrap { align-items: start; row-gap: 40px; }
+  .feature.wide .text2 { padding-top: 46px; }
+  .feature.wide .stage { grid-column: 1 / -1; padding: 32px 36px; }
+  .tag { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--c); margin-bottom: 14px; }
+  .tag b { display: inline-grid; place-items: center; min-width: 34px; height: 26px; padding: 0 8px; border-radius: 8px; background: var(--c); color: #fff; font-size: 13px; }
+  :root[data-theme="dark"] .tag b { color: #111; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag b { color: #111; } }
+  .feature h2 { font-size: clamp(26px, 3.2vw, 36px); line-height: 1.3; letter-spacing: -.025em; margin: 0 0 16px; font-weight: 800; }
+  .feature .desc { color: var(--muted); font-size: 17px; margin: 0 0 24px; }
+  .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .checks li { position: relative; display: grid; grid-template-columns: 24px 1fr; gap: 12px; font-size: 15.5px; line-height: 1.55; }
+  .checks li::before { content: ""; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--cs); box-shadow: inset 0 0 0 1.5px var(--c); }
+  .checks li::after {
+    content: ""; position: absolute; left: 7px; top: 6px; width: 5px; height: 9px;
+    border: solid var(--c); border-width: 0 2.2px 2.2px 0; transform: rotate(45deg);
   }
+  .checks b { font-weight: 700; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .pill { font-size: 13px; font-weight: 600; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); }
+  .pill.on { color: var(--c); border-color: color-mix(in srgb, var(--c) 40%, transparent); background: var(--cs); }
+
+  .stage { position: relative; background: var(--cs); border-radius: 22px; padding: 28px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .card img { background: #fff; }
+  .label { font-size: 12.5px; font-weight: 700; color: var(--muted); letter-spacing: .02em; margin: 0 0 8px; }
+
+  /* 01 blocks -> figure */
+  .b2f { display: grid; grid-template-columns: .72fr auto 1.28fr; gap: 14px; align-items: center; }
+  .b2f .arrow { display: grid; justify-items: center; gap: 6px; color: var(--c); font-weight: 700; font-size: 13px; }
+  .b2f .arrow span { background: #1f9d4f; color: #fff; border-radius: 8px; padding: 6px 10px; white-space: nowrap; font-size: 13px; }
+  .b2f .arrow svg { width: 28px; height: 28px; }
+  .certified { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: 13.5px; }
+  .certified span { color: var(--ok); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+  .certified span::before { content: "✓"; font-weight: 800; }
+
+  /* 02 hangul paper */
+  .paper { background: var(--paper); color: var(--paper-ink); border-radius: 12px; box-shadow: var(--shadow-lg); border: 1px solid #e4e4e4; overflow: hidden; }
+  .paper .doc-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f2f4f7; border-bottom: 1px solid #e4e4e4; font-size: 12px; color: #667085; }
+  .paper .doc-bar .h { width: 18px; height: 18px; border-radius: 4px; background: #2b6fd6; color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+  .paper .body { padding: 44px 30px 24px; font-family: "Batang", "바탕", "Nanum Myeongjo", "AppleMyungjo", serif; font-size: 16px; line-height: 1.9; }
+  .paper .q { margin: 0 0 14px; }
+  .paper .m { font-family: "Times New Roman", "Batang", serif; font-style: italic; }
+  .paper .ov { text-decoration: overline; }
+  .paper svg { display: block; width: 78%; margin: 4px auto 6px; height: auto; }
+  .paper .choices { display: flex; flex-wrap: wrap; gap: 4px 24px; font-size: 15px; }
+  .hot { position: relative; outline: 2px dashed var(--f2); outline-offset: 4px; border-radius: 4px; }
+  .callout { position: absolute; z-index: 2; background: var(--f2); color: #fff; font: 700 12.5px/1.3 "Pretendard Variable", "Pretendard", "Malgun Gothic", sans-serif; padding: 6px 10px; border-radius: 8px; white-space: nowrap; box-shadow: 0 6px 16px rgb(224 112 11 / .3); font-style: normal; }
+  .callout.t1 { right: -10px; top: -32px; }
+  .callout.t2 { right: -10px; top: -32px; }
+
+  /* 03 exam toggle */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .tb { font-size: 13px; padding: 6px 12px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+  .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 3px; margin-bottom: 14px; }
+  .seg button { font: inherit; font-size: 14px; font-weight: 600; border: 0; background: none; color: var(--muted); padding: 6px 14px; border-radius: 7px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--c); color: #fff; }
+  .swap { position: relative; }
+  .swap img { width: 100%; height: auto; transition: opacity .35s ease; }
+  .swap img + img { position: absolute; inset: 0; }
+  .swap img[hidden] { display: block; opacity: 0; }
+  .swap-cap { font-size: 13px; color: var(--muted); margin: 10px 2px 0; }
+
+  /* 04 AI */
+  .ai-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .ai-shot { max-width: 460px; margin: 0 auto; }
+  .ai-shot img { width: 100%; }
+  .providers { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 16px; }
+  .steps4 { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; counter-reset: s; }
+  .steps4 li { position: relative; padding: 0 0 18px 48px; }
+  .steps4 li::before {
+    counter-increment: s; content: counter(s); position: absolute; left: 0; top: 0;
+    width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--cs); color: var(--c); font-weight: 800; font-size: 14px; box-shadow: inset 0 0 0 1.5px var(--c);
+  }
+  .steps4 li:not(:last-child)::after { content: ""; position: absolute; left: 15.5px; top: 36px; bottom: 4px; width: 1.5px; background: color-mix(in srgb, var(--c) 35%, transparent); }
+  .steps4 b { display: block; font-size: 16px; }
+  .steps4 span { color: var(--muted); font-size: 14.5px; }
+  .fine { margin-top: 10px; font-size: 14px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+
+  /* Generic sections */
+  section.plain { padding: 80px 0; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
+  section.plain h2 { font-size: clamp(24px, 2.8vw, 30px); letter-spacing: -.02em; margin: 0 0 8px; font-weight: 800; }
+  .sub { color: var(--muted); margin: 0 0 32px; }
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; position: relative; }
+  .flow div { position: relative; padding: 0 14px 0 0; }
+  .flow div::before { content: ""; position: absolute; top: 15px; left: 34px; right: 0; height: 1.5px; background: var(--line); }
+  .flow div:last-child::before { display: none; }
+  .flow i { position: relative; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-style: normal; font-weight: 800; font-size: 14px; margin-bottom: 12px; }
   .flow b { display: block; margin-bottom: 2px; }
-  .flow span { color: var(--muted); font-size: 14px; }
+  .flow span { color: var(--muted); font-size: 14.5px; line-height: 1.5; display: block; }
 
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
-  .card h3 { font-size: 17px; margin: 0 0 6px; }
-  .card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
-
-  .steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; max-width: 760px; }
-  .steps li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
-  .steps .n { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; color: var(--accent); background: var(--surface); }
-  .steps p { margin: 4px 0 0; }
-  .note { margin-top: 22px; max-width: 760px; background: var(--accent-soft); border-radius: 12px; padding: 16px 18px; font-size: 15px; }
+  .install { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .install > div { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .install .n { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 800; margin-bottom: 10px; }
+  .install b { display: block; font-size: 17px; margin-bottom: 4px; }
+  .install p { margin: 0; color: var(--muted); font-size: 15px; }
+  .note { margin-top: 18px; background: var(--accent-soft); border-radius: 12px; padding: 16px 18px; font-size: 15px; }
   .note b { display: block; margin-bottom: 4px; }
 
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 40px; }
-  .two h3 { font-size: 17px; margin: 0 0 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 48px; }
+  .two h3 { font-size: 17px; margin: 0 0 8px; }
   .two p, .two ul { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
   .two ul { padding-left: 18px; }
-  code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .92em; }
-  code { background: var(--accent-soft); padding: 1px 6px; border-radius: 6px; color: var(--ink); }
+  .two li { margin-bottom: 4px; }
   .hash { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: var(--muted); word-break: break-all; }
 
-  details { border-bottom: 1px solid var(--line); padding: 14px 0; max-width: 760px; }
+  details { border-bottom: 1px solid var(--line); padding: 16px 0; max-width: 800px; }
   summary { cursor: pointer; font-weight: 600; }
   details p { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
 
+  .final { margin: 0 0 64px; border-radius: 24px; padding: 48px; text-align: center; color: #fff;
+    background: linear-gradient(120deg, #2f6fde 0%, #5b5fe0 50%, #7b4fd6 100%); }
+  .final h2 { margin: 0 0 10px; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.02em; }
+  .final p { margin: 0 0 24px; opacity: .9; }
+  .final .btn { background: #fff; color: #2f4fbf; }
+  .final .meta { color: rgb(255 255 255 / .85); margin-top: 14px; }
+  .final .meta b { color: #fff; }
+
   footer { border-top: 1px solid var(--line); padding: 28px 0 48px; color: var(--muted); font-size: 14px; }
   footer a { color: var(--muted); }
-  .theme { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 13px; cursor: pointer; margin-left: 18px; }
 
-  @media (max-width: 860px) {
-    .hero { grid-template-columns: 1fr; padding-top: 16px; gap: 28px; }
-    .flow { grid-template-columns: 1fr 1fr; }
-    .cards, .two { grid-template-columns: 1fr; }
+  @media (max-width: 980px) {
+    .glance { grid-template-columns: 1fr 1fr; }
+    .top nav a:not(.mini) { display: none; }
   }
-  @media (max-width: 520px) {
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-top: 28px; gap: 32px; }
+    .feature { padding: 64px 0; }
+    .feature .wrap { grid-template-columns: 1fr; gap: 32px; }
+    .feature.flip .text { order: 0; }
+    .feature.wide .text2 { padding-top: 0; }
+    .feature.wide .stage { padding: 20px; }
+    .flow { grid-template-columns: 1fr; gap: 16px; }
+    .flow div { display: grid; grid-template-columns: 32px 1fr; gap: 0 14px; padding: 0; }
+    .flow div::before { display: none; }
+    .flow i { grid-row: span 2; margin: 0; }
+    .install, .two { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
     .wrap { padding: 0 16px; }
-    .top nav a { display: none; }
-    .brand { white-space: nowrap; }
-    .flow { grid-template-columns: 1fr; }
+    .glance { grid-template-columns: 1fr; padding-bottom: 56px; }
+    .stage { padding: 16px; border-radius: 16px; }
+    .b2f { grid-template-columns: 1fr; }
+    .b2f .arrow svg { transform: rotate(90deg); }
+    .paper .body { padding: 18px 18px 16px; font-size: 15px; }
     .btn { width: 100%; justify-content: center; }
-    section { padding: 44px 0; }
+    .final { padding: 32px 20px; border-radius: 18px; }
+    .top .theme { display: none; }
+    section.plain { padding: 56px 0; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="#">
       <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 26 L27 26 L19 6 Z" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/></svg>
       Geometry Drawer
-    </div>
+    </a>
     <nav>
+      <a href="#features">기능</a>
       <a href="#how">작동 방식</a>
-      <a href="manual/">사용 설명서</a>
       <a href="#install">설치</a>
+      <a href="manual/">사용 설명서</a>
       <a href="#faq">자주 묻는 질문</a>
       <button class="theme" id="theme" type="button" aria-label="화면 테마 바꾸기">테마</button>
+      <a class="mini dl" href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/GeometryDrawer.exe">다운로드</a>
     </nav>
-  </header>
+  </div>
+</header>
 
-  <main>
+<main>
+  <div class="wrap">
     <div class="hero">
       <div>
-        <h1>조건만 적으면,<br>작도 순서까지 맞는 도형을</h1>
-        <p class="lead">“AB = 5, ∠C = 90°” 같은 조건을 입력하면 자와 컴퍼스로 그리는 순서를 찾고, 점을 움직여도 조건이 지켜지는지 확인한 도형을 그려 줍니다. 시험지·학습지용 그림을 Windows에서 바로 만듭니다.</p>
+        <div class="eyebrow">시험지·학습지용 기하 그림 · Windows</div>
+        <h1>블록으로 조건을 쌓으면,<br><span class="hl">움직여도 맞는 도형</span>이<br>그려집니다</h1>
+        <p class="lead">자와 컴퍼스 작도 순서를 찾아 조건이 지켜지는지 검증한 도형을 그립니다. 시험지 양식으로 다듬어 한글에 바로 붙여 넣고, 문제 사진은 AI로 조건까지 한 번에 바꿉니다.</p>
         <div class="cta">
-          <a class="btn" id="download" href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/GeometryDrawer.exe">
+          <a class="btn dl" id="download" href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/GeometryDrawer.exe">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span id="download-label">Windows용 다운로드</span>
+            <span class="dl-label">Windows용 다운로드</span>
           </a>
-          <div class="meta" id="release-meta">Windows 10·11 (64비트) · 설치 없이 실행</div>
+          <a class="btn ghost" href="manual/">사용 설명서</a>
         </div>
-        <p class="meta" style="margin-top:14px">처음이라면 <a href="manual/">사용 설명서</a>를 따라 해 보세요. 화면을 보며 순서대로 따라 할 수 있습니다.</p>
+        <p class="meta release-meta" style="margin-top:16px">Windows 10·11 (64비트) · 설치 없이 실행</p>
       </div>
-      <figure class="figure" aria-label="삼각형의 외접원을 작도하는 예시 그림">
-        <svg viewBox="40 52 420 356" role="img">
-          <g fill="none" stroke="var(--construct)" stroke-width="1.4" stroke-linecap="round">
-            <path d="M194.2 131.7 A180 180 0 0 1 223.5 168.0"/><path d="M196.5 168.0 A180 180 0 0 1 225.8 131.7"/>
-            <path d="M223.5 356.0 A180 180 0 0 1 194.2 392.3"/><path d="M225.8 392.3 A180 180 0 0 1 196.5 356.0"/>
-            <path d="M407.0 91.3 A180 180 0 0 1 449.0 111.6"/><path d="M430.0 76.7 A180 180 0 0 1 424.3 123.1"/>
-            <path d="M170.0 263.3 A180 180 0 0 1 175.7 216.9"/><path d="M193.0 248.7 A180 180 0 0 1 151.0 228.4"/>
-            <path d="M210 128 L210 396" stroke-dasharray="5 5"/>
-            <path d="M440 94 L150 252" stroke-dasharray="5 5"/>
-          </g>
-          <circle cx="210" cy="218.9" r="146.5" fill="none" stroke="var(--accent)" stroke-width="2.2"/>
-          <path d="M70 262 L350 262 L250 78 Z" fill="var(--accent-soft)" fill-opacity=".55" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>
-          <g fill="var(--ink)">
-            <circle cx="70" cy="262" r="4.5"/><circle cx="350" cy="262" r="4.5"/><circle cx="250" cy="78" r="4.5"/>
-            <circle cx="210" cy="218.9" r="4" fill="var(--accent)"/>
-          </g>
-          <g font-size="19" font-style="italic" font-family="Times New Roman, serif" fill="var(--ink)">
-            <text x="48" y="282">A</text><text x="358" y="284">B</text><text x="258" y="70">C</text>
-            <text x="218" y="214" fill="var(--accent)">O</text>
-          </g>
-        </svg>
-        <figcaption>예: 두 변의 수직이등분선을 작도해 외심 O와 외접원을 찾는 순서</figcaption>
-      </figure>
+      <div class="window">
+        <div class="bar"><i></i><i></i><i></i><span>작도판 · 블록으로 그린 직각삼각형과 중점</span></div>
+        <img src="img/app.jpg" width="1600" height="978" alt="작도판 화면: 왼쪽에 블록 조건으로 그린 삼각형 ABC와 중점 E, 오른쪽에 대수창과 쌓인 조건 블록">
+      </div>
     </div>
 
-    <section id="how">
-      <h2>작동 방식</h2>
-      <p class="sub">그림을 “그럴듯하게” 맞추는 대신, 조건에서 출발해 작도하고 검증합니다.</p>
+    <div class="glance" id="features" aria-label="네 가지 핵심 기능">
+      <a class="tile c1" href="#f1">
+        <span class="no">01</span>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3.5" width="12" height="5" rx="1.5"/><rect x="3" y="9.5" width="18" height="5" rx="1.5"/><rect x="3" y="15.5" width="9" height="5" rx="1.5"/></svg></div>
+        <h3>블록으로 로컬 작도</h3>
+        <p>API 키·인터넷 없이 내 PC에서, 움직여도 조건이 지켜지는 그림</p>
+        <span class="go">자세히 →</span>
+      </a>
+      <a class="tile c2" href="#f2">
+        <span class="no">02</span>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/><path d="M11 13h6M11 16.5h4"/></svg></div>
+        <h3>한글·이미지 복사</h3>
+        <p>그림은 Ctrl+C로, 문제 문장은 편집 가능한 한글 수식으로</p>
+        <span class="go">자세히 →</span>
+      </a>
+      <a class="tile c3" href="#f3">
+        <span class="no">03</span>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></div>
+        <h3>시험지 양식 자동</h3>
+        <p>처음부터 시험지 모양으로, 글꼴·굵기·방향은 한 번에</p>
+        <span class="go">자세히 →</span>
+      </a>
+      <a class="tile c4" href="#f4">
+        <span class="no">04</span>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></div>
+        <h3>AI로 빠른 IR 변환</h3>
+        <p>문제 사진 → 조건(IR) → 블록에서 바로 확인·수정</p>
+        <span class="go">자세히 →</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 01 -->
+  <section class="feature wide c1" id="f1">
+    <div class="wrap">
+      <div class="text">
+        <div class="tag"><b>01</b>블록 코딩 · 로컬 작도</div>
+        <h2>블록을 쌓으면,<br>조건을 지키는 그림이 됩니다</h2>
+        <p class="desc">삼각형·길이·중점 같은 블록 하나가 조건 한 줄입니다. <b>그리기</b>를 누르면 자와 컴퍼스 작도 순서를 찾아 그리고, 점을 끌어도 조건이 깨지지 않는지 검증합니다.</p>
+      </div>
+      <div class="text2">
+        <ul class="checks">
+          <li><span><b>API 키·인터넷 없이</b> 모든 작도가 내 PC 안에서 이루어집니다</span></li>
+          <li><span>점을 끌어도 길이·중점·수직 관계가 그대로 — <b>작도 인증</b></span></li>
+          <li><span>블록과 텍스트가 자동으로 맞춰져, 익숙해지면 한 줄 문법으로 빠르게</span></li>
+          <li><span>외심·내심·교점을 끼워 넣는 <b>큰 관계 블록 편집기</b></span></li>
+        </ul>
+        <div class="pills"><span class="pill on">로그인·키 불필요</span><span class="pill">삼각형 · 원 · 내분 · 외분 · 수선의 발</span></div>
+      </div>
+      <div class="stage">
+        <div class="b2f">
+          <div>
+            <p class="label">조건 블록</p>
+            <div class="card"><img src="img/blocks.png" width="504" height="520" alt="조건 블록: 삼각형 ABC, 길이 AB=3, AC=4, BC=5, 점 E는 선분 BC의 중점, 선분 AE 그리기, 구하기 각 BAC" loading="lazy"></div>
+          </div>
+          <div class="arrow" aria-hidden="true">
+            <span>▶ 그리기</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+          </div>
+          <div>
+            <p class="label">작도 결과</p>
+            <div class="card"><img src="img/figure-exam.jpg" width="900" height="635" alt="작도 결과: 변 길이 3, 4, 5인 삼각형 ABC와 BC의 중점 E, 작도에 쓴 점선 원" loading="lazy"></div>
+          </div>
+        </div>
+        <div class="certified" aria-label="결과 메시지 예시">
+          <span>작도 인증</span><span>∠BAC = 90° 측정</span><span>등식 잔차 0</span><span>유도 사실 검사 통과</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="feature flip c2" id="f2">
+    <div class="wrap">
+      <div class="text">
+        <div class="tag"><b>02</b>한글 · 이미지 복사</div>
+        <h2>한글 문서에<br>그림도, 수식도 바로</h2>
+        <p class="desc">만든 그림은 버튼 하나로 클립보드에, 문제 문장은 <b>편집 가능한 한글 수식 개체</b>로 복사됩니다. 캡처하고 수식을 다시 입력하는 일이 없어집니다.</p>
+        <ul class="checks">
+          <li><span><b>그림 복사(Ctrl+C)</b> → 한글·워드·파워포인트에 Ctrl+V</span></li>
+          <li><span><b>수식 포함 복사</b> → 선분·각·분수·근호·제곱이 한글 수식으로</span></li>
+          <li><span>블록에서 <b>문제 문장을 자동 생성</b>, 선택지 ①~⑤까지 한 번에</span></li>
+          <li><span>PNG는 도형만 잘라 3배 해상도로, 한글이 없어도 <code>.hml</code> 문서로 저장</span></li>
+        </ul>
+        <div class="pills"><span class="pill on">한컴 한글 수식</span><span class="pill">워드 · 파워포인트</span><span class="pill">PNG 3×</span></div>
+      </div>
+      <div class="stage">
+        <div class="paper" role="img" aria-label="한글 문서에 붙여 넣은 예시: 문제 문장과 수식, 삼각형 그림, 선택지">
+          <div class="doc-bar"><span class="h">한</span>단원평가.hwp</div>
+          <div class="body">
+            <p class="q"><span class="hot"><span class="callout t2">수식 포함 복사</span>3. 삼각형 <span class="m">ABC</span>에서 <span class="m"><span class="ov">AB</span> = 3</span>, <span class="m"><span class="ov">AC</span> = 4</span>, <span class="m"><span class="ov">BC</span> = 5</span>이다. 선분 <span class="m">BC</span>의 중점을 <span class="m">E</span>라 할 때, <span class="m">∠BAC</span>의 크기는?</span></p>
+            <div class="hot" style="margin: 46px 8% 18px">
+              <span class="callout t1">그림 복사 · Ctrl+C</span>
+              <svg viewBox="0 0 450 250" aria-hidden="true">
+                <g fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round">
+                  <path d="M24 218 L424 218 L168 26 Z"/><path d="M168 26 L224 218"/>
+                  <path d="M124 211 V225 M324 211 V225"/>
+                </g>
+                <g font-family="Times New Roman, serif" font-size="22" fill="#111">
+                  <text x="160" y="18">A</text><text x="2" y="228">B</text><text x="430" y="228">C</text><text x="217" y="245">E</text>
+                </g>
+              </svg>
+            </div>
+            <div class="choices"><span>① 30°</span><span>② 45°</span><span>③ 90°</span><span>④ 120°</span><span>⑤ 150°</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="feature c3" id="f3">
+    <div class="wrap">
+      <div class="text">
+        <div class="tag"><b>03</b>시험지 양식 · 도형 수정</div>
+        <h2>처음부터 시험지 모양,<br>고치기는 클릭 한 번</h2>
+        <p class="desc">검은 가는 선, 명조 글씨, 점 없이 이름만 — 시험지 양식으로 그려집니다. 크기·굵기·방향을 한 번에 맞추고, 필요한 선만 골라 다듬습니다.</p>
+        <ul class="checks">
+          <li><span><b>시험지 모양 ↔ 작도 모양</b>을 버튼 하나로 전환</span></li>
+          <li><span><b>글꼴 0.25~6배, 선 굵기 0.1~8배</b>를 전체에 한 번에</span></li>
+          <li><span><b>변 방향 고정</b>으로 점을 끌어도 밑변은 항상 수평</span></li>
+          <li><span>선마다 실선·파선·점선과 굵기, 라벨에는 <code>$\angle ABC$</code> 같은 수식</span></li>
+        </ul>
+        <div class="pills"><span class="pill on">Ctrl+Z 되돌리기</span><span class="pill">각도·길이 표시</span><span class="pill">설명선 · 지시선</span></div>
+      </div>
+      <div class="stage">
+        <div class="toolbar" aria-hidden="true"><span class="tb">글꼴 1×</span><span class="tb">선 굵기 1×</span><span class="tb">변 방향 고정</span></div>
+        <div class="seg" role="group" aria-label="그림 모양 비교">
+          <button type="button" data-show="exam" aria-pressed="true">시험지 모양</button>
+          <button type="button" data-show="construct" aria-pressed="false">작도 모양</button>
+        </div>
+        <div class="card swap">
+          <img id="img-exam" src="img/figure-exam.jpg" width="900" height="635" alt="시험지 모양: 검은 선과 명조 글씨로 그린 삼각형" loading="lazy">
+          <img id="img-construct" src="img/figure-construct.jpg" width="900" height="635" alt="작도 모양: 점과 선을 색으로 구분한 같은 삼각형" loading="lazy" hidden>
+        </div>
+        <p class="swap-cap" id="swap-cap">시험지 모양 — 내보낼 때는 격자 없이 도형만 나갑니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="feature flip c4" id="f4">
+    <div class="wrap">
+      <div class="text">
+        <div class="tag"><b>04</b>외부 AI · 빠른 IR 변환</div>
+        <h2>문제 사진을 붙여 넣으면,<br>조건으로 바꿔 드립니다</h2>
+        <p class="desc">AI가 사진 속 지문과 그림을 읽어 조건(IR)으로 바꿉니다. 결과는 블록으로 보여서 원래 문제와 비교하며 바로 고칠 수 있습니다.</p>
+        <ol class="steps4">
+          <li><b>사진 붙여넣기</b><span>Ctrl+V · 끌어놓기 — 글·그림이 한 장이든 여러 장이든 최대 4장</span></li>
+          <li><b>IR 변환</b><span>지문 읽기 → 그림 판독 → 문장 판독, 그림이 있으면 30~60초</span></li>
+          <li><b>블록에서 확인·수정</b><span>맞지 않는 조건은 ‘그림에서 읽음’ 줄부터 짚어 줍니다</span></li>
+          <li><b>그리기</b><span>읽은 지문은 한글 수식으로 복사까지</span></li>
+        </ol>
+        <p class="fine">본인 API 키 필요 · 문제 하나에 수 원 정도. 이 기능을 쓸 때만 사진·문장이 고른 AI 회사로 전송됩니다.</p>
+      </div>
+      <div class="stage">
+        <div class="providers"><span class="pill on">OpenAI</span><span class="pill on">Claude</span><span class="pill on">Google Gemini</span><span class="pill on">Upstage</span></div>
+        <div class="card ai-shot"><img src="manual/img/15-ai.png" width="732" height="942" alt="그림·문장 탭: 문제 사진 칸, 수식이 든 문제 지문, AI 모델 선택과 IR 변환 결과" loading="lazy"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="plain" id="how">
+      <h2>그럴듯한 그림이 아니라, 검증된 작도</h2>
+      <p class="sub">모양을 눈대중으로 맞추지 않고, 조건에서 출발해 작도하고 확인합니다.</p>
       <div class="flow">
-        <div><b>입력</b><span>조건을 직접 쓰거나, 문제 그림·문장을 AI로 변환</span></div>
-        <div><b>조건 확인</b><span>변환된 조건(IR)을 보고 고칠 수 있음</span></div>
-        <div><b>추론·초안</b><span>숨은 사실을 찾고 조건을 만족하는 배치를 계산</span></div>
-        <div><b>작도</b><span>자와 컴퍼스로 그리는 순서를 구성</span></div>
-        <div><b>인증</b><span>점을 움직여 보며 조건이 계속 지켜지는지 확인</span></div>
+        <div><i>1</i><b>입력</b><span>블록·한 줄 문법으로 직접, 또는 사진·문장을 AI로</span></div>
+        <div><i>2</i><b>조건 확인</b><span>조건(IR)을 블록으로 보고 고침</span></div>
+        <div><i>3</i><b>추론·초안</b><span>숨은 사실을 찾고 조건을 만족하는 배치 계산</span></div>
+        <div><i>4</i><b>작도</b><span>자와 컴퍼스로 그리는 순서 구성</span></div>
+        <div><i>5</i><b>인증</b><span>점을 움직여도 조건이 지켜지는지 확인</span></div>
       </div>
     </section>
 
-    <section>
-      <h2>할 수 있는 것</h2>
-      <p class="sub">작도판은 기본 브라우저에서 열립니다. 별도 브라우저나 Python 설치는 필요 없습니다.</p>
-      <div class="cards">
-        <div class="card"><h3>직접 조건 입력</h3><p>블록이나 한 줄짜리 조건으로 입력합니다. API 키나 인터넷 없이 쓸 수 있습니다.</p></div>
-        <div class="card"><h3>그림·문장 변환 (선택)</h3><p>문제 사진이나 문장을 조건으로 바꾸고, 사진의 문제 글을 수식째 한글로 옮깁니다. OpenAI·Claude·Google·Upstage 가운데 쓰는 회사의 본인 API 키가 필요하고 사용료가 듭니다.</p></div>
-        <div class="card"><h3>시험지용 마무리</h3><p>글꼴·선 굵기 조절, 변 방향 고정, PNG 내보내기, 그림 복사, 문장 편집, 도면 저장·열기.</p></div>
-        <div class="card"><h3>한글 수식 복사</h3><p>문장과 수식을 한컴 한글의 수식 개체로 복사합니다. 한글이 설치된 PC에서 동작합니다.</p></div>
-        <div class="card"><h3>내 PC에만 저장</h3><p>도면·설정·API 키는 내 컴퓨터에만 남고, 키는 비밀번호로 암호화합니다. AI 변환을 쓸 때만 그 사진·문장이 고른 AI 회사로 전송됩니다.</p></div>
-        <div class="card"><h3>버튼 한 번으로 업데이트</h3><p>실행 창의 ‘업데이트 하기’가 새 버전을 받아 확인한 뒤 교체하고 다시 실행합니다.</p></div>
-      </div>
-    </section>
-
-    <section id="install">
+    <section class="plain" id="install">
       <h2>설치와 실행</h2>
-      <p class="sub">설치 과정이 없는 단일 실행 파일입니다.</p>
-      <ol class="steps">
-        <li><span class="n">1</span><div><b>다운로드</b><p>위의 버튼으로 <code>GeometryDrawer.exe</code>를 받아 원하는 폴더(예: 바탕화면, 문서)에 둡니다. 업데이트를 위해 쓰기 가능한 폴더가 좋습니다.</p></div></li>
-        <li><span class="n">2</span><div><b>실행</b><p>더블클릭하면 작은 실행 창이 뜨고 기본 브라우저에 작도판이 열립니다. 첫 실행은 몇 초 걸릴 수 있습니다.</p></div></li>
-        <li><span class="n">3</span><div><b>종료</b><p>실행 창을 닫으면 프로그램이 끝납니다. 그 전에 작업을 저장하세요.</p></div></li>
-      </ol>
+      <p class="sub">설치 과정이 없는 단일 실행 파일입니다. 별도 브라우저나 Python 설치는 필요 없습니다.</p>
+      <div class="install">
+        <div><span class="n">1</span><b>다운로드</b><p><code>GeometryDrawer.exe</code>를 받아 바탕화면·문서처럼 쓰기 가능한 폴더에 둡니다.</p></div>
+        <div><span class="n">2</span><b>실행</b><p>더블클릭하면 작은 실행 창이 뜨고 기본 브라우저에 작도판이 열립니다. 첫 실행은 몇 초 걸립니다.</p></div>
+        <div><span class="n">3</span><b>업데이트·종료</b><p>실행 창의 ‘업데이트 하기’로 새 버전을 받고, 창을 닫으면 끝납니다. 그 전에 작업을 저장하세요.</p></div>
+      </div>
       <div class="note">
         <b>“Windows의 PC 보호” 창이 뜨면</b>
-        아직 코드 서명 인증서가 없어 처음 실행할 때 나타날 수 있습니다. <b style="display:inline">추가 정보 → 실행</b>을 누르세요. 받은 파일이 이 페이지에 적힌 SHA-256과 같은지 확인하려면 PowerShell에서 <code>Get-FileHash GeometryDrawer.exe</code>를 실행해 비교하면 됩니다.
+        아직 코드 서명 인증서가 없어 처음 실행할 때 나타날 수 있습니다. <b style="display:inline">추가 정보 → 실행</b>을 누르세요. 받은 파일이 아래에 적힌 SHA-256과 같은지 확인하려면 PowerShell에서 <code>Get-FileHash GeometryDrawer.exe</code>를 실행해 비교하면 됩니다.
       </div>
     </section>
 
-    <section>
+    <section class="plain">
       <h2>안전과 개인정보</h2>
       <p class="sub">무엇이 어디에 저장되고, 업데이트가 어떻게 확인되는지.</p>
       <div class="two">
@@ -218,10 +504,9 @@
           <h3>저장 위치</h3>
           <p><code>%LOCALAPPDATA%\GeometryDrawer</code>에 저장합니다. exe를 옮기거나 업데이트해도 그대로 남습니다.</p>
           <ul>
-            <li>저장한 도면은 비밀번호로 암호화</li>
-            <li>API 키는 exe에 들어 있지 않고, 입력한 키도 암호화해 보관</li>
-            <li><b>AI 변환(사진·문장 → 조건)을 쓰면 그 사진과 문장이 고른 AI 회사(OpenAI·Anthropic·Google·Upstage)로 전송됩니다.</b> 각 회사의 데이터 처리 방침이 적용됩니다. 직접 조건 입력과 작도는 전송 없이 이 PC에서만 동작합니다.</li>
-            <li>AI 변환에 넣은 사진·문장 기록은 30일이 지나면 자동으로 지웁니다</li>
+            <li>저장한 도면과 입력한 API 키는 비밀번호로 암호화 (키는 exe에 들어 있지 않음)</li>
+            <li><b>AI 변환을 쓰면 그 사진과 문장이 고른 AI 회사(OpenAI·Anthropic·Google·Upstage)로 전송됩니다.</b> 각 회사의 데이터 처리 방침이 적용됩니다. 직접 입력과 작도는 전송 없이 이 PC에서만 동작합니다.</li>
+            <li>AI 변환에 넣은 사진·문장 기록은 30일이 지나면 자동으로 지움</li>
             <li>작도판은 이 PC 안에서만 열리는 주소(127.0.0.1)로 동작하고, 다른 웹사이트는 접근할 수 없음</li>
           </ul>
         </div>
@@ -233,32 +518,45 @@
       </div>
     </section>
 
-    <section id="faq">
+    <section class="plain" id="faq">
       <h2>자주 묻는 질문</h2>
       <p class="sub">기능별 자세한 사용법은 <a href="manual/">사용 설명서</a>에 화면과 함께 있습니다.</p>
-      <details><summary>인터넷이 꼭 필요한가요?</summary><p>직접 조건을 입력해 작도하는 기능은 인터넷 없이 됩니다. 그림·문장 AI 변환과 업데이트 확인에만 인터넷이 필요합니다.</p></details>
+      <details><summary>인터넷이 꼭 필요한가요?</summary><p>블록·직접 입력으로 작도하는 기능은 인터넷 없이 됩니다. 사진·문장 AI 변환과 업데이트 확인에만 인터넷이 필요합니다.</p></details>
       <details><summary>AI 변환은 어떻게 켜나요?</summary><p>작도판의 ‘로그인’에서 비밀번호를 정한 뒤 ‘API 키’에 쓰려는 회사(OpenAI·Claude·Google·Upstage)의 본인 키를 입력하고, 문제 입력의 ‘AI’ 목록에서 모델을 고릅니다. 비밀번호는 8자 이상이며 저장되지 않으니 잊지 않도록 해 주세요. 잊으면 암호화된 도면과 키를 열 수 없습니다.</p></details>
+      <details><summary>한글 수식 복사는 어떤 환경에서 되나요?</summary><p>‘수식 포함 복사’는 한컴 한글이 설치된 PC에서 동작합니다. 한글이 없으면 ‘한글 문서 저장’으로 .hml 파일을 받아 나중에 열 수 있습니다. 그림 복사와 PNG 저장은 한글 없이도 됩니다.</p></details>
       <details><summary>작도가 끝나지 않으면?</summary><p>한 도형당 30초가 지나면 자동으로 멈춥니다. 조건이 너무 많거나 서로 맞지 않는 경우가 많으니, 조건을 확인하거나 줄여서 다시 시도하세요.</p></details>
       <details><summary>문제가 생기면 어디를 보나요?</summary><p>실행 창의 ‘저장 폴더’를 누르면 열리는 폴더의 <code>logs</code>에 실행 기록이 있습니다. 8765 포트가 사용 중이면 다른 포트를 자동으로 고릅니다.</p></details>
       <details><summary>이전 버전을 쓰고 있어요 (1.0.13 이하)</summary><p>이전 버전은 업데이트 위치가 달라서 버튼으로 새 버전을 받지 못합니다. 이 페이지에서 한 번만 새로 받아 기존 파일을 바꿔 주세요. 그 뒤로는 ‘업데이트 하기’로 받을 수 있습니다.</p></details>
     </section>
-  </main>
 
-  <footer>
+    <div class="final">
+      <h2>지금 바로 첫 도형을 그려 보세요</h2>
+      <p>설치 없이 실행 · 블록 작도는 키 없이 바로</p>
+      <a class="btn dl" href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/GeometryDrawer.exe">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="dl-label">Windows용 다운로드</span>
+      </a>
+      <p class="meta release-meta">Windows 10·11 (64비트) · 설치 없이 실행</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
     <a href="manual/">사용 설명서</a> ·
     <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases">모든 버전과 변경 기록</a> ·
     <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/THIRD_PARTY_LICENSES.txt">오픈소스 라이선스</a> ·
     <a href="https://github.com/dorororong/GeometryDrawer-Releases/releases/latest/download/UserGuide.txt">사용 안내(텍스트)</a>
-  </footer>
-</div>
+  </div>
+</footer>
 
 <script>
 (function () {
   // Theme: follows the system; the button cycles system → light → dark and remembers the choice.
   var root = document.documentElement, key = 'gd-theme', order = ['', 'light', 'dark'];
   var label = { '': '테마: 자동', light: '테마: 밝게', dark: '테마: 어둡게' };
-  function apply(t) { if (t) root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); btn.textContent = label[t]; }
   var btn = document.getElementById('theme'), saved = '';
+  function apply(t) { if (t) root.setAttribute('data-theme', t); else root.removeAttribute('data-theme'); btn.textContent = label[t]; }
   try { saved = localStorage.getItem(key) || ''; } catch (e) {}
   apply(order.indexOf(saved) >= 0 ? saved : '');
   btn.addEventListener('click', function () {
@@ -267,9 +565,25 @@
     try { localStorage.setItem(key, next); } catch (e) {}
   });
 
+  // Header border once the page scrolls.
+  var top = document.getElementById('top');
+  function onScroll() { top.classList.toggle('scrolled', window.scrollY > 4); }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  // Feature 03: exam style <-> construction style.
+  var caps = { exam: '시험지 모양 — 내보낼 때는 격자 없이 도형만 나갑니다.', construct: '작도 모양 — 점과 선을 색으로 구분해 고치기 쉽습니다.' };
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var show = b.getAttribute('data-show');
+      document.querySelectorAll('.seg button').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      document.getElementById('img-exam').hidden = show !== 'exam';
+      document.getElementById('img-construct').hidden = show !== 'construct';
+      document.getElementById('swap-cap').textContent = caps[show];
+    });
+  });
+
   // Latest release: version, date, size and SHA-256 from the public GitHub API.
-  var meta = document.getElementById('release-meta'), hash = document.getElementById('hash');
-  var link = document.getElementById('download'), text = document.getElementById('download-label');
+  var metas = document.querySelectorAll('.release-meta'), hash = document.getElementById('hash');
   fetch('https://api.github.com/repos/dorororong/GeometryDrawer-Releases/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
     .then(function (r) {
       if (r.status === 404) throw 'none';
@@ -281,21 +595,23 @@
       if (!exe) throw 'none';
       var date = new Date(rel.published_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
       var mb = (exe.size / 1048576).toFixed(0);
-      meta.innerHTML = '';
-      var b = document.createElement('b'); b.textContent = '버전 ' + rel.tag_name.replace(/^v/, '');
-      meta.appendChild(b);
-      meta.appendChild(document.createTextNode(' · ' + date + ' · ' + mb + 'MB'));
-      meta.appendChild(document.createElement('br'));
-      meta.appendChild(document.createTextNode('Windows 10·11 (64비트) · 설치 없이 실행'));
+      metas.forEach(function (meta) {
+        meta.innerHTML = '';
+        var b = document.createElement('b'); b.textContent = '버전 ' + rel.tag_name.replace(/^v/, '');
+        meta.appendChild(b);
+        meta.appendChild(document.createTextNode(' · ' + date + ' · ' + mb + 'MB · Windows 10·11 (64비트) · 설치 없이 실행'));
+      });
       var digest = exe.digest || (String(rel.body || '').match(/SHA-256:\s*`?([a-f0-9]{64})/) || [])[1];
       if (digest) hash.textContent = 'SHA-256 (' + rel.tag_name + '): ' + String(digest).replace(/^sha256:/, '');
     })
     .catch(function (why) {
       if (why === 'none') {
-        link.setAttribute('aria-disabled', 'true');
-        link.removeAttribute('href');
-        text.textContent = '첫 배포 준비 중';
-        meta.textContent = '곧 다운로드할 수 있습니다.';
+        document.querySelectorAll('.dl').forEach(function (link) {
+          link.setAttribute('aria-disabled', 'true');
+          link.removeAttribute('href');
+          var t = link.querySelector('.dl-label'); if (t) t.textContent = '첫 배포 준비 중';
+        });
+        metas.forEach(function (meta) { meta.textContent = '곧 다운로드할 수 있습니다.'; });
       }
       // other failures (rate limit, offline): keep the direct download link as is
     });
